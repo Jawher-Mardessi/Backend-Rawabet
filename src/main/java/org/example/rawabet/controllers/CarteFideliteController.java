@@ -9,10 +9,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/carte")
-@RequiredArgsConstructor
 public class CarteFideliteController {
 
     private final ICarteFideliteService carteService;
+
+    public CarteFideliteController(ICarteFideliteService carteService) {
+        this.carteService = carteService;
+    }
 
     // CREATE
     @PostMapping("/add")

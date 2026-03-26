@@ -8,6 +8,7 @@ import org.example.rawabet.enums.ReservationStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class ReservationEvenement {
@@ -28,6 +29,7 @@ public class ReservationEvenement {
     private Evenement evenement;
 
     @OneToMany(mappedBy = "reservationEvenement")
+    @JsonIgnore
     private List<ReservationMateriel> materiels;
 
     @OneToOne

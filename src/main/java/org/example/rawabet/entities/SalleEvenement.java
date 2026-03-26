@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.example.rawabet.enums.SalleType;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
@@ -22,6 +23,7 @@ public class SalleEvenement {
     private SalleType type;
 
     @OneToMany(mappedBy = "salle")
+    @JsonIgnore
     private List<Evenement> evenements;
 
     public Long getId() {

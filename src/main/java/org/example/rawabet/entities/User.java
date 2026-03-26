@@ -1,9 +1,8 @@
 package org.example.rawabet.entities;
-
 import org.example.rawabet.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 
 @Entity
@@ -22,18 +21,23 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<ReservationCinema> reservationCinemas;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<ReservationEvenement> reservationEvenements;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Notification> notifications;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Feedback> feedbacks;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<ChatInstantane> messages;
 
     @OneToOne(mappedBy = "user")
@@ -43,6 +47,7 @@ public class User {
     private Abonnement abonnement;
 
     @ManyToMany
+    @JsonIgnore
     private List<ClubCinema> clubs;
 
     public Long getId() {

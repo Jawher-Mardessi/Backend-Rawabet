@@ -8,10 +8,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class CarteFideliteServiceImpl implements ICarteFideliteService {
 
     private final CarteFideliteRepository carteRepository;
+
+    public CarteFideliteServiceImpl(CarteFideliteRepository carteRepository) {
+        this.carteRepository = carteRepository;
+    }
 
     @Override
     public CarteFidelite addCarte(CarteFidelite carte) {

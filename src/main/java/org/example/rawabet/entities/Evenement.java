@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class Evenement {
@@ -23,6 +24,7 @@ public class Evenement {
     private SalleEvenement salle;
 
     @OneToMany(mappedBy = "evenement")
+    @JsonIgnore
     private List<ReservationEvenement> reservations;
 
     public Long getId() {
