@@ -9,11 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthServiceImpl authService;
-
+    public AuthController(AuthServiceImpl authService) {
+        this.authService = authService;
+    }
     @PostMapping("/login")
     public String login(@RequestParam String email,
                         @RequestParam String password) {

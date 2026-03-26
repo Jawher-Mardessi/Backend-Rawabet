@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
@@ -18,6 +19,7 @@ public class Materiel {
     private int quantiteDisponible;
 
     @OneToMany(mappedBy = "materiel")
+    @JsonIgnore
     private List<ReservationMateriel> reservations;
 
     public Long getId() {

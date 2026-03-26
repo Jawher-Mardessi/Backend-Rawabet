@@ -9,10 +9,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/users")
-@RequiredArgsConstructor
 public class UserController {
 
     private final IUserService userService;
+
+    public UserController(IUserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping("/add")
     public User addUser(@RequestBody User user) {
