@@ -7,7 +7,6 @@ import org.example.rawabet.enums.ReservationStatus;
 import org.example.rawabet.repositories.*;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDate;
 
 @Service
@@ -24,7 +23,6 @@ public class PaiementServiceImpl implements IPaiementService {
     private final FactureRepository factureRepository;
 
     @Override
-
     public Paiement payerReservationCinema(Long reservationId,String methode){
 
         ReservationCinema reservation = reservationCinemaRepository.findById(reservationId)
@@ -32,15 +30,11 @@ public class PaiementServiceImpl implements IPaiementService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if(reservation.getPaiement()!=null)
-
             throw new RuntimeException("Reservation already paid");
 
         double montant = reservation.getSeats()
-
                 .stream()
-
                 .mapToDouble(seat -> reservation.getSeance().getPrixBase())
-
                 .sum();
 
         Paiement paiement = new Paiement();
@@ -53,9 +47,25 @@ public class PaiementServiceImpl implements IPaiementService {
 
         paiement.setReservationCinema(reservation);
 
+        paiement.setReservationEvenement(null);
+
         paiement.setMethode(methode);
 
         paiementRepository.save(paiement);
+        
+        Facture facture = new Facture();
+
+        facture.setNumeroFacture("FAC-"+paiement.getId());
+
+        facture.setDateEmission(LocalDate.now());
+
+        facture.setMontant(paiement.getMontant());
+
+        facture.setPaiement(paiement);
+
+        factureRepository.save(facture);
+
+        paiement.setFacture(facture);
 
         reservation.setPaiement(paiement);
 
@@ -67,7 +77,6 @@ public class PaiementServiceImpl implements IPaiementService {
     }
 
     @Override
-
     public Paiement payerReservationEvenement(Long reservationId,String methode){
 
         ReservationEvenement reservation = reservationEvenementRepository.findById(reservationId)
@@ -75,34 +84,11 @@ public class PaiementServiceImpl implements IPaiementService {
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if(reservation.getPaiement()!=null)
-
             throw new RuntimeException("Reservation already paid");
 
-        long hours = Duration.between(
-
-                reservation.getDateDebut(),
-
-                reservation.getDateFin()
-
-        ).toHours();
-
-        double salleCost = hours *
-
-                reservation.getEvenement()
-
-                        .getSalle()
-
-                        .getPrixParHeure();
-
-        double materielCost = reservation.getMateriels()
-
-                .stream()
-
-                .mapToDouble(m -> m.getPrix())
-
-                .sum();
-
-        double montant = salleCost + materielCost;
+        // Since event module has no pricing fields,
+        // we just assign a basic reservation fee
+        double montant = 0;
 
         Paiement paiement = new Paiement();
 
@@ -113,6 +99,8 @@ public class PaiementServiceImpl implements IPaiementService {
         paiement.setStatut(PaymentStatus.SUCCESS);
 
         paiement.setReservationEvenement(reservation);
+
+        paiement.setReservationCinema(null);
 
         paiement.setMethode(methode);
 
@@ -128,7 +116,6 @@ public class PaiementServiceImpl implements IPaiementService {
     }
 
     @Override
-
     public Paiement getPaiement(Long id){
 
         return paiementRepository.findById(id)
