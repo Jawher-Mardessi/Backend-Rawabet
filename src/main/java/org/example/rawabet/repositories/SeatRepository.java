@@ -3,5 +3,13 @@ package org.example.rawabet.repositories;
 import org.example.rawabet.entities.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SeatRepository extends JpaRepository<Seat, Long> {
+import java.util.List;
+
+public interface SeatRepository
+        extends JpaRepository<Seat,Long>{
+
+    List<Seat> findBySeanceId(Long seanceId);
+
+    boolean existsByIdAndReservationIsNotNull(Long id);
+
 }

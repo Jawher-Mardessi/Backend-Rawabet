@@ -1,88 +1,119 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.entities.ReservationCinema;
-import org.example.rawabet.entities.Seance;
-import org.example.rawabet.entities.Ticket;
-import org.example.rawabet.entities.User;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.example.rawabet.entities.*;
 import org.example.rawabet.enums.ReservationStatus;
-import org.example.rawabet.enums.TicketStatus;
-import org.example.rawabet.repositories.ReservationCinemaRepository;
-import org.example.rawabet.repositories.SeanceRepository;
-import org.example.rawabet.repositories.TicketRepository;
-import org.example.rawabet.repositories.UserRepository;
-import org.example.rawabet.services.IReservationCinemaService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.example.rawabet.repositories.*;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class ReservationCinemaServiceImpl implements IReservationCinemaService {
+@RequiredArgsConstructor
 
-    @Autowired
-    private ReservationCinemaRepository reservationRepository;
-    @Autowired
-    private UserRepository userRepository;
+public class ReservationCinemaServiceImpl
+        implements IReservationCinemaService {
 
-    @Autowired
-    private SeanceRepository seanceRepository;
+    private final ReservationCinemaRepository reservationRepository;
 
-    @Autowired
-    private TicketRepository ticketRepository;
+    private final UserRepository userRepository;
 
-    @Override
-    public ReservationCinema addReservation(ReservationCinema reservation) {
-        return reservationRepository.save(reservation);
-    }
+    private final SeanceRepository seanceRepository;
+
+    private final SeatRepository seatRepository;
 
     @Override
-    public ReservationCinema updateReservation(ReservationCinema reservation) {
-        return reservationRepository.save(reservation);
-    }
+    @Transactional
 
-    @Override
-    public void deleteReservation(Long id) {
-        reservationRepository.deleteById(id);
-    }
+    public ReservationCinema reserverAvecSeats(
+            Long userId,
+            Long seanceId,
+            List<Long> seatIds){
 
-    @Override
-    public ReservationCinema getReservationById(Long id) {
-        return reservationRepository.findById(id).orElse(null);
-    }
+        User user=userRepository.findById(userId)
+                .orElseThrow(()->
+                        new RuntimeException("User not found"));
 
-    @Override
-    public List<ReservationCinema> getAllReservations() {
-        return reservationRepository.findAll();
-    }
-    @Override
-    public ReservationCinema reserverAvecTickets(Long userId, Long seanceId, int nbTickets) {
+        Seance seance=seanceRepository.findById(seanceId)
+                .orElseThrow(()->
+                        new RuntimeException("Seance not found"));
 
-        // 🔴 1. récupérer user
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        ReservationCinema reservation=
+                new ReservationCinema();
 
-        // 🔴 2. récupérer séance
-        Seance seance = seanceRepository.findById(seanceId)
-                .orElseThrow(() -> new RuntimeException("Seance not found"));
-
-        // 🔴 3. créer réservation
-        ReservationCinema reservation = new ReservationCinema();
         reservation.setUser(user);
+
         reservation.setSeance(seance);
+
         reservation.setDateReservation(LocalDate.now());
-        reservation.setStatut(ReservationStatus.PENDING);
 
-        reservation = reservationRepository.save(reservation);
+        reservation.setStatut(
+                ReservationStatus.PENDING);
 
-        // 🔥 4. créer tickets automatiquement
-        for (int i = 0; i < nbTickets; i++) {
-            Ticket ticket = new Ticket();
-            ticket.setStatut(TicketStatus.RESERVED);
-            ticket.setReservationCinema(reservation);
-            ticketRepository.save(ticket);
+        reservation=reservationRepository.save(reservation);
+
+        List<Seat> seats=new ArrayList<>();
+
+        for(Long seatId:seatIds){
+
+            Seat seat=seatRepository
+                    .findById(seatId)
+                    .orElseThrow(()->
+                            new RuntimeException(
+                                    "Seat not found"));
+
+            if(seat.getReservation()!=null){
+
+                throw new RuntimeException(
+                        "Seat "+seat.getNumero()
+                                +" already reserved");
+
+            }
+
+            if(!seat.getSeance()
+                    .getId()
+                    .equals(seanceId)){
+
+                throw new RuntimeException(
+                        "Seat does not belong to this seance");
+
+            }
+
+            seat.setReservation(reservation);
+
+            seatRepository.save(seat);
+
+            seats.add(seat);
+
         }
 
+        reservation.setSeats(seats);
+
         return reservation;
+
     }
+
+    @Override
+
+    public List<ReservationCinema>
+    getAllReservations(){
+
+        return reservationRepository.findAll();
+
+    }
+
+    @Override
+
+    public ReservationCinema
+    getReservationById(Long id){
+
+        return reservationRepository
+                .findById(id)
+                .orElse(null);
+
+    }
+
 }

@@ -1,50 +1,53 @@
 package org.example.rawabet.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.example.rawabet.entities.ReservationCinema;
 import org.example.rawabet.services.IReservationCinemaService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/reservations")
+
+@RequiredArgsConstructor
+
 public class ReservationCinemaController {
 
-    @Autowired
-    private IReservationCinemaService service;
+    private final IReservationCinemaService service;
 
-    @PostMapping("/add")
-    public ReservationCinema add(@RequestBody ReservationCinema r){
-        return service.addReservation(r);
-    }
+    @PostMapping("/reserver")
 
-    @PutMapping("/update")
-    public ReservationCinema update(@RequestBody ReservationCinema r){
-        return service.updateReservation(r);
-    }
+    public ReservationCinema reserver(
 
-    @DeleteMapping("/delete/{id}")
-    public void delete(@PathVariable Long id){
-        service.deleteReservation(id);
-    }
+            @RequestParam Long userId,
 
-    @GetMapping("/{id}")
-    public ReservationCinema getById(@PathVariable Long id){
-        return service.getReservationById(id);
+            @RequestParam Long seanceId,
+
+            @RequestParam List<Long> seatIds){
+
+        return service.reserverAvecSeats(
+                userId,
+                seanceId,
+                seatIds);
+
     }
 
     @GetMapping("/all")
+
     public List<ReservationCinema> getAll(){
+
         return service.getAllReservations();
+
     }
 
-    @PostMapping("/reserver")
-    public ReservationCinema reserverAvecTickets(
-            @RequestParam Long userId,
-            @RequestParam Long seanceId,
-            @RequestParam int nbTickets) {
+    @GetMapping("/{id}")
 
-        return service.reserverAvecTickets(userId, seanceId, nbTickets);
+    public ReservationCinema getById(
+            @PathVariable Long id){
+
+        return service.getReservationById(id);
+
     }
+
 }

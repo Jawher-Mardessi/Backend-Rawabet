@@ -6,13 +6,13 @@ import java.util.List;
 
 public interface IReservationCinemaService {
 
-    ReservationCinema addReservation(ReservationCinema reservation);
+    ReservationCinema reserverAvecSeats(
+            Long userId,
+            Long seanceId,
+            List<Long> seatIds);
 
-    ReservationCinema updateReservation(ReservationCinema reservation);
-
-    void deleteReservation(Long id);
+    List<ReservationCinema> getAllReservations();
 
     ReservationCinema getReservationById(Long id);
 
-    List<ReservationCinema> getAllReservations();
 }
