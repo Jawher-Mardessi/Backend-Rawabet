@@ -2,17 +2,20 @@ package org.example.rawabet.controllers;
 
 import org.example.rawabet.entities.Seance;
 import org.example.rawabet.services.ISeanceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/seances")
+
 public class SeanceController {
 
-    @Autowired
-    private ISeanceService service;
+    private final ISeanceService service;
+
+    public SeanceController(ISeanceService service){
+        this.service = service;
+    }
 
     @PostMapping("/add")
     public Seance add(@RequestBody Seance s){

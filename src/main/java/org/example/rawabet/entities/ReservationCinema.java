@@ -1,21 +1,25 @@
 package org.example.rawabet.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.example.rawabet.enums.ReservationStatus;
 
 import java.time.LocalDate;
 import java.util.List;
+
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class ReservationCinema {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private java.time.LocalDate dateReservation;
+    private LocalDate dateReservation;
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus statut;
@@ -26,65 +30,11 @@ public class ReservationCinema {
     @ManyToOne
     private Seance seance;
 
-    @OneToMany(mappedBy = "reservationCinema")
-    private List<Ticket> tickets;
+    @OneToMany(mappedBy="reservation", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Seat> seats;
 
-    @OneToOne
+    @OneToOne(mappedBy="reservationCinema")
     private Paiement paiement;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDate getDateReservation() {
-        return dateReservation;
-    }
-
-    public void setDateReservation(LocalDate dateReservation) {
-        this.dateReservation = dateReservation;
-    }
-
-    public ReservationStatus getStatut() {
-        return statut;
-    }
-
-    public void setStatut(ReservationStatus statut) {
-        this.statut = statut;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Seance getSeance() {
-        return seance;
-    }
-
-    public void setSeance(Seance seance) {
-        this.seance = seance;
-    }
-
-    public List<Ticket> getTickets() {
-        return tickets;
-    }
-
-    public void setTickets(List<Ticket> tickets) {
-        this.tickets = tickets;
-    }
-
-    public Paiement getPaiement() {
-        return paiement;
-    }
-
-    public void setPaiement(Paiement paiement) {
-        this.paiement = paiement;
-    }
 }

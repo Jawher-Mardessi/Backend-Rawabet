@@ -1,12 +1,18 @@
 package org.example.rawabet.entities;
+
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class Seat {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long id;
 
     private int numero;
@@ -14,27 +20,7 @@ public class Seat {
     @ManyToOne
     private Seance seance;
 
-    public Long getId() {
-        return id;
-    }
+    @ManyToOne
+    private ReservationCinema reservation;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public int getNumero() {
-        return numero;
-    }
-
-    public void setNumero(int numero) {
-        this.numero = numero;
-    }
-
-    public Seance getSeance() {
-        return seance;
-    }
-
-    public void setSeance(Seance seance) {
-        this.seance = seance;
-    }
 }
