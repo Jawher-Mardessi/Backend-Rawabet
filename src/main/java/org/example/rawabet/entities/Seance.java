@@ -39,4 +39,8 @@ public class Seance {
     @JsonIgnore
     private List<Seat> seats;
 
+    @OneToMany(mappedBy="seance", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<ChatInstantane> messages;
+
 }
