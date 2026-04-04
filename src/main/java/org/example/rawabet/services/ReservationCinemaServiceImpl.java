@@ -10,7 +10,6 @@ import org.example.rawabet.repositories.ReservationCinemaRepository;
 import org.example.rawabet.repositories.SeanceRepository;
 import org.example.rawabet.repositories.TicketRepository;
 import org.example.rawabet.repositories.UserRepository;
-import org.example.rawabet.services.IReservationCinemaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

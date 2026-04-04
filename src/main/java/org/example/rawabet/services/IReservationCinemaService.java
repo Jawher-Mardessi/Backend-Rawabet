@@ -15,4 +15,6 @@ public interface IReservationCinemaService {
     ReservationCinema getReservationById(Long id);
 
     List<ReservationCinema> getAllReservations();
+
+    ReservationCinema reserverAvecTickets(Long userId, Long seanceId, int nbTickets);
 }
