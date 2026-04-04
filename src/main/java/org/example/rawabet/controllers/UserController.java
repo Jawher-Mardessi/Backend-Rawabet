@@ -22,6 +22,12 @@ public class UserController {
         return userService.addUser(user);
     }
 
+
+    @PostMapping("/add-with-role")
+    public User addUserWithRole(@RequestBody User user, @RequestParam String roleName) {
+        return userService.addUserWithRole(user, roleName);
+    }
+
     @PutMapping("/update")
     public User updateUser(@RequestBody User user) {
         return userService.updateUser(user);

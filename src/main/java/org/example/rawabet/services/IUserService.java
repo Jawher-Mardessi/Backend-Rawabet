@@ -7,6 +7,7 @@ import java.util.List;
 public interface IUserService {
 
     User addUser(User user);
+    User addUserWithRole(User user, String roleName);
 
     User updateUser(User user);
 

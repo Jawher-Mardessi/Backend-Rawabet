@@ -37,7 +37,7 @@ public class AuthServiceImpl implements IAuthService {
 
     public String loginAndGenerateToken(String email, String password) {
         User user = login(email, password);
-        return jwtService.generateToken(user.getEmail());
+        return jwtService.generateToken(user);
     }
 
     @Override

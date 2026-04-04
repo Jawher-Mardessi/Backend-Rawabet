@@ -1,5 +1,4 @@
 package org.example.rawabet.entities;
-import org.example.rawabet.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,8 +16,13 @@ public class User {
     private String email;
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private List<Role> roles;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
@@ -82,13 +86,7 @@ public class User {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
-    }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
 
     public List<ReservationCinema> getReservationCinemas() {
         return reservationCinemas;
@@ -152,5 +150,13 @@ public class User {
 
     public void setClubs(List<ClubCinema> clubs) {
         this.clubs = clubs;
+    }
+
+    public List<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
     }
 }
