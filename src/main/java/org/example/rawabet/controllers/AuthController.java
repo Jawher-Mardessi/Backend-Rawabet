@@ -1,11 +1,9 @@
 package org.example.rawabet.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.LoginRequest;
 import org.example.rawabet.services.AuthServiceImpl;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -16,10 +14,8 @@ public class AuthController {
         this.authService = authService;
     }
     @PostMapping("/login")
-    public String login(@RequestParam String email,
-                        @RequestParam String password) {
-
-        return authService.loginAndGenerateToken(email, password);
+    public String login(@RequestBody LoginRequest request) {
+        return authService.login(request);
     }
     @PostMapping("/test")
     public String test() {

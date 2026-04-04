@@ -1,19 +1,21 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.entities.User;
+import org.example.rawabet.dto.RegisterRequest;
+import org.example.rawabet.dto.UserResponse;
 
 import java.util.List;
 
 public interface IUserService {
 
-    User addUser(User user);
-    User addUserWithRole(User user, String roleName);
+    UserResponse addUser(RegisterRequest request);
 
-    User updateUser(User user);
+    UserResponse addUserWithRole(RegisterRequest request);
+
+    UserResponse updateUser(Long id, RegisterRequest request);
 
     void deleteUser(Long id);
 
-    User getUserById(Long id);
+    UserResponse getUserById(Long id);
 
-    List<User> getAllUsers();
+    List<UserResponse> getAllUsers();
 }

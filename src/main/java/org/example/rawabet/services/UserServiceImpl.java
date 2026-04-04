@@ -1,75 +1,167 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.RegisterRequest;
+import org.example.rawabet.dto.UserResponse;
 import org.example.rawabet.entities.Role;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.repositories.RoleRepository;
 import org.example.rawabet.repositories.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    // CREATE
+    // =========================
+    // ✅ CREATE USER (CLIENT)
+    // =========================
     @Override
-    public User addUser(User user) {
+    public UserResponse addUser(RegisterRequest request) {
 
-        // 🔐 encoder password
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
 
-        // 🎯 récupérer rôle CLIENT par défaut
-        Role role = roleRepository.findByName("CLIENT")
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+        Role clientRole = roleRepository.findByName("CLIENT")
+                .orElseThrow(() -> new RuntimeException("CLIENT role not found"));
 
-        // 🔥 affecter rôle automatiquement
-        user.setRoles(List.of(role));
+        User user = new User();
+        user.setNom(request.getNom());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRoles(List.of(clientRole));
 
-        return userRepository.save(user);
-    }
-    // ✅ CREATE avec rôle spécifique (pour SUPER_ADMIN)
-    @Override
-    public User addUserWithRole(User user, String roleName) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        Role role = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-        user.setRoles(List.of(role));
-        return userRepository.save(user);
+        return mapToResponse(userRepository.save(user));
     }
 
-    // ✅ UPDATE → ne jamais écraser le password
+    // =========================
+    // 🔐 CREATE USER WITH ROLE
+    // =========================
     @Override
-    public User updateUser(User user) {
-        User existing = userRepository.findById(user.getId())
+    public UserResponse addUserWithRole(RegisterRequest request) {
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (request.getRoles() == null || request.getRoles().isEmpty()) {
+            throw new RuntimeException("Roles are required");
+        }
+
+        // 🔐 BLOCK SUPER_ADMIN
+        // 🔐 NORMALIZE ROLES (IMPORTANT)
+        List<String> roleNames = request.getRoles()
+                .stream()
+                .map(String::toUpperCase)
+                .toList();
+
+// 🔐 BLOCK SUPER_ADMIN (SECURE)
+        if (roleNames.contains("SUPER_ADMIN")) {
+            throw new RuntimeException("Cannot assign SUPER_ADMIN role");
+        }
+
+// 🔐 FETCH ROLES
+        List<Role> roles = roleRepository.findByNameIn(roleNames);
+
+        if (roles.isEmpty()) {
+            throw new RuntimeException("No valid roles found");
+        }
+        if (roles.isEmpty()) {
+            throw new RuntimeException("No valid roles found");
+        }
+
+        User user = new User();
+        user.setNom(request.getNom());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRoles(roles);
+
+        return mapToResponse(userRepository.save(user));
+    }
+
+    // =========================
+    // ✏️ UPDATE USER
+    // =========================
+    @Override
+    public UserResponse updateUser(Long id, RegisterRequest request) {
+
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        existing.setNom(user.getNom());
-        existing.setEmail(user.getEmail());
-        // ⚠️ password non modifié ici → faire un endpoint séparé pour ça
-        return userRepository.save(existing);
+
+        user.setNom(request.getNom());
+
+        if (!Objects.equals(user.getEmail(), request.getEmail())) {
+            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+                throw new RuntimeException("Email already exists");
+            }
+            user.setEmail(request.getEmail());
+        }
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        return mapToResponse(userRepository.save(user));
     }
 
-    // DELETE
+    // =========================
+    // ❌ DELETE USER
+    // =========================
     @Override
     public void deleteUser(Long id) {
-        userRepository.deleteById(id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        userRepository.delete(user);
     }
 
-    // GET BY ID
+    // =========================
+    // 🔍 GET USER BY ID
+    // =========================
     @Override
-    public User getUserById(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public UserResponse getUserById(Long id) {
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return mapToResponse(user);
     }
 
-    // GET ALL
+    // =========================
+    // 📋 GET ALL USERS
+    // =========================
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    // =========================
+    // 🔥 MAPPING
+    // =========================
+    private UserResponse mapToResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .nom(user.getNom())
+                .email(user.getEmail())
+                .roles(
+                        user.getRoles().stream()
+                                .map(Role::getName)
+                                .toList()
+                )
+                .build();
     }
 }
