@@ -1,50 +1,57 @@
 package org.example.rawabet.controllers;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.rawabet.entities.User;
+import org.example.rawabet.dto.RegisterRequest;
+import org.example.rawabet.dto.UserResponse;
 import org.example.rawabet.services.IUserService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final IUserService userService;
 
-    public UserController(IUserService userService) {
-        this.userService = userService;
-    }
-
+    // ✅ REGISTER (client)
     @PostMapping("/add")
-    public User addUser(@RequestBody User user) {
-        return userService.addUser(user);
+    public UserResponse addUser(@Valid @RequestBody RegisterRequest request) {
+        return userService.addUser(request);
     }
 
-
+    // ✅ CREATE WITH ROLE (SUPER_ADMIN only)
     @PostMapping("/add-with-role")
-    public User addUserWithRole(@RequestBody User user, @RequestParam String roleName) {
-        return userService.addUserWithRole(user, roleName);
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    public UserResponse addUserWithRole(@Valid @RequestBody RegisterRequest request) {
+        return userService.addUserWithRole(request);
     }
 
+    // ✅ UPDATE
     @PutMapping("/update")
-    public User updateUser(@RequestBody User user) {
-        return userService.updateUser(user);
+    public UserResponse updateUser(@Valid @RequestBody RegisterRequest request,
+                                   @RequestParam Long id) {
+        return userService.updateUser(id, request);
     }
 
+    // DELETE
     @DeleteMapping("/delete/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
 
+    // GET BY ID
     @GetMapping("/get/{id}")
-    public User getUserById(@PathVariable Long id) {
+    public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
+    // GET ALL
     @GetMapping("/all")
-    public List<User> getAllUsers() {
+    public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
 }
