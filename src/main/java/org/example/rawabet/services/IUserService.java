@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface IUserService {
 
-    UserResponse addUser(RegisterRequest request);
+    // 👤 inscription simple (CLIENT)
+    UserResponse register(RegisterRequest request);
 
-    UserResponse addUserWithRole(RegisterRequest request);
+    // 🔐 ADMIN crée user avec rôle
+    UserResponse createUserByAdmin(RegisterRequest request);
 
     UserResponse updateUser(Long id, RegisterRequest request);
 

@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")
                         .requestMatchers("/event/**").hasAuthority("EVENT_CREATE")
                         .requestMatchers("/formation/**").hasAuthority("FORMATION_CREATE")
+                        .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
 
                         .anyRequest().authenticated()
                 )

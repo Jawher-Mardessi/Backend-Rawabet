@@ -1,6 +1,7 @@
 package org.example.rawabet.controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.AuthResponse;
 import org.example.rawabet.dto.LoginRequest;
 import org.example.rawabet.services.AuthServiceImpl;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +14,9 @@ public class AuthController {
     public AuthController(AuthServiceImpl authService) {
         this.authService = authService;
     }
+
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
+    public AuthResponse login(@RequestBody LoginRequest request) {
         return authService.login(request);
     }
     @PostMapping("/test")

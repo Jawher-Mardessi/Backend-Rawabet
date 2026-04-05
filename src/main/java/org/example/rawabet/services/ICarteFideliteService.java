@@ -1,18 +1,14 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.entities.CarteFidelite;
-
-import java.util.List;
+import org.example.rawabet.dto.CarteFideliteResponse;
+import org.example.rawabet.entities.User;
+import org.example.rawabet.enums.ActionType;
 
 public interface ICarteFideliteService {
 
-    CarteFidelite addCarte(CarteFidelite carte);
+    // 🔐 utilisateur connecté
+    CarteFideliteResponse getMyCarte();
 
-    CarteFidelite updateCarte(CarteFidelite carte);
-
-    void deleteCarte(Long id);
-
-    CarteFidelite getCarteById(Long id);
-
-    List<CarteFidelite> getAllCartes();
+    // 🔥 logique métier interne
+    void addPoints(User user, int points, ActionType action);
 }

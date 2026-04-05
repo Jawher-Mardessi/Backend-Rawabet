@@ -17,40 +17,55 @@ public class UserController {
 
     private final IUserService userService;
 
-    // ✅ REGISTER (client)
+    // =========================
+    // 👤 REGISTER (CLIENT)
+    // =========================
     @PostMapping("/add")
-    public UserResponse addUser(@Valid @RequestBody RegisterRequest request) {
-        return userService.addUser(request);
+    public UserResponse register(@Valid @RequestBody RegisterRequest request) {
+        return userService.register(request); // ✅ corrigé
     }
 
-    // ✅ CREATE WITH ROLE (SUPER_ADMIN only)
+    // =========================
+    // 🔐 CREATE USER (ADMIN)
+    // =========================
     @PostMapping("/add-with-role")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
-    public UserResponse addUserWithRole(@Valid @RequestBody RegisterRequest request) {
-        return userService.addUserWithRole(request);
+    public UserResponse createUserByAdmin(@Valid @RequestBody RegisterRequest request) {
+        return userService.createUserByAdmin(request); // ✅ corrigé
     }
 
-    // ✅ UPDATE
+    // =========================
+    // ✏️ UPDATE USER
+    // =========================
     @PutMapping("/update")
     public UserResponse updateUser(@Valid @RequestBody RegisterRequest request,
                                    @RequestParam Long id) {
         return userService.updateUser(id, request);
     }
 
-    // DELETE
+    // =========================
+    // ❌ DELETE USER
+    // =========================
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
 
-    // GET BY ID
+    // =========================
+    // 🔍 GET USER BY ID
+    // =========================
     @GetMapping("/get/{id}")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
-    // GET ALL
+    // =========================
+    // 📋 GET ALL USERS
+    // =========================
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public List<UserResponse> getAllUsers() {
         return userService.getAllUsers();
     }
