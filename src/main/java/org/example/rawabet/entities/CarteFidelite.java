@@ -1,54 +1,42 @@
 package org.example.rawabet.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.example.rawabet.enums.Level;
 
 import java.time.LocalDate;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CarteFidelite {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int points;
-    private java.time.LocalDate dateExpiration;
+    @Column(nullable = false)
+    private int points = 0;
+
+    @Column(nullable = false)
+    private LocalDate dateExpiration;
+
+    // 🔥 ENUM (PRO)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Level level;
 
     @OneToOne
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @JsonIgnore
     private User user;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public int getPoints() {
-        return points;
-    }
-
-    public void setPoints(int points) {
-        this.points = points;
-    }
-
-    public LocalDate getDateExpiration() {
-        return dateExpiration;
-    }
-
-    public void setDateExpiration(LocalDate dateExpiration) {
-        this.dateExpiration = dateExpiration;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
+    // 🔥 logique expiration
+    public boolean isExpired() {
+        return dateExpiration.isBefore(LocalDate.now());
     }
 }

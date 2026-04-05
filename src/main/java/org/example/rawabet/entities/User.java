@@ -45,6 +45,7 @@ public class User {
     private List<ChatInstantane> messages;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private CarteFidelite carteFidelite;
 
     @OneToOne(mappedBy = "user")

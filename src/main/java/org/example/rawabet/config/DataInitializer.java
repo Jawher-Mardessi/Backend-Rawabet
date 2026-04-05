@@ -45,6 +45,10 @@ public class DataInitializer {
             createPermission("FORMATION", "UPDATE");
             createPermission("FORMATION", "DELETE");
 
+            // 🔥 FIDELITY PERMISSIONS (AJOUT IMPORTANT)
+            createPermission("FIDELITY", "READ");
+            createPermission("FIDELITY", "UPDATE");
+
             // 🔥 SYSTEM PERMISSION
             Permission adminManage = createPermission("ADMIN", "MANAGE");
 
@@ -56,9 +60,13 @@ public class DataInitializer {
             Role client = createRole("CLIENT");
 
             // 🔗 ASSIGN PERMISSIONS
+
             adminCinema.setPermissions(permissionRepository.findByModule("CINEMA"));
             adminEvent.setPermissions(permissionRepository.findByModule("EVENT"));
             adminFormation.setPermissions(permissionRepository.findByModule("FORMATION"));
+
+            // 🔥 CLIENT → uniquement fidélité
+            client.setPermissions(permissionRepository.findByModule("FIDELITY"));
 
             // 🔥 SUPER ADMIN → ALL + ADMIN_MANAGE
             HashSet<Permission> allPermissions = new HashSet<>(permissionRepository.findAll());
@@ -88,7 +96,7 @@ public class DataInitializer {
                     Permission permission = new Permission();
                     permission.setModule(module);
                     permission.setAction(action);
-                    permission.setName(name); // ⚠️ IMPORTANT
+                    permission.setName(name);
                     return permissionRepository.save(permission);
                 });
     }

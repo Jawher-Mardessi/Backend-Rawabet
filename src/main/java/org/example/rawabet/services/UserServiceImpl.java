@@ -3,13 +3,18 @@ package org.example.rawabet.services;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.RegisterRequest;
 import org.example.rawabet.dto.UserResponse;
+import org.example.rawabet.entities.CarteFidelite;
 import org.example.rawabet.entities.Role;
 import org.example.rawabet.entities.User;
+import org.example.rawabet.enums.Level;
+import org.example.rawabet.repositories.CarteFideliteRepository;
 import org.example.rawabet.repositories.RoleRepository;
 import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,16 +25,16 @@ public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CarteFideliteRepository carteRepository;
 
     // =========================
-    // ✅ CREATE USER (CLIENT)
+    // 👤 REGISTER (CLIENT)
     // =========================
     @Override
-    public UserResponse addUser(RegisterRequest request) {
+    @Transactional
+    public UserResponse register(RegisterRequest request) {
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
+        checkEmail(request.getEmail());
 
         Role clientRole = roleRepository.findByName("CLIENT")
                 .orElseThrow(() -> new RuntimeException("CLIENT role not found"));
@@ -40,43 +45,42 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(List.of(clientRole));
 
-        return mapToResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        // 💳 création carte
+        carteRepository.save(createCarte(savedUser));
+
+        return mapToResponse(savedUser);
     }
 
     // =========================
-    // 🔐 CREATE USER WITH ROLE
+    // 🔐 CREATE USER (ADMIN)
     // =========================
     @Override
-    public UserResponse addUserWithRole(RegisterRequest request) {
+    @Transactional
+    public UserResponse createUserByAdmin(RegisterRequest request) {
 
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
+        checkEmail(request.getEmail());
 
         if (request.getRoles() == null || request.getRoles().isEmpty()) {
             throw new RuntimeException("Roles are required");
         }
 
-        // 🔐 BLOCK SUPER_ADMIN
-        // 🔐 NORMALIZE ROLES (IMPORTANT)
         List<String> roleNames = request.getRoles()
                 .stream()
                 .map(String::toUpperCase)
                 .toList();
 
-// 🔐 BLOCK SUPER_ADMIN (SECURE)
+        // 🔐 sécurité
         if (roleNames.contains("SUPER_ADMIN")) {
             throw new RuntimeException("Cannot assign SUPER_ADMIN role");
         }
 
-// 🔐 FETCH ROLES
         List<Role> roles = roleRepository.findByNameIn(roleNames);
 
-        if (roles.isEmpty()) {
-            throw new RuntimeException("No valid roles found");
-        }
-        if (roles.isEmpty()) {
-            throw new RuntimeException("No valid roles found");
+        // 🔥 validation stricte
+        if (roles.size() != roleNames.size()) {
+            throw new RuntimeException("Some roles are invalid");
         }
 
         User user = new User();
@@ -85,7 +89,12 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(roles);
 
-        return mapToResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        // 💳 création carte
+        carteRepository.save(createCarte(savedUser));
+
+        return mapToResponse(savedUser);
     }
 
     // =========================
@@ -100,9 +109,7 @@ public class UserServiceImpl implements IUserService {
         user.setNom(request.getNom());
 
         if (!Objects.equals(user.getEmail(), request.getEmail())) {
-            if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-                throw new RuntimeException("Email already exists");
-            }
+            checkEmail(request.getEmail());
             user.setEmail(request.getEmail());
         }
 
@@ -117,10 +124,14 @@ public class UserServiceImpl implements IUserService {
     // ❌ DELETE USER
     // =========================
     @Override
+    @Transactional
     public void deleteUser(Long id) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        carteRepository.findByUser(user)
+                .ifPresent(carteRepository::delete);
 
         userRepository.delete(user);
     }
@@ -147,6 +158,27 @@ public class UserServiceImpl implements IUserService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    // =========================
+    // 🔐 EMAIL CHECK
+    // =========================
+    private void checkEmail(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("Email already exists");
+        }
+    }
+
+    // =========================
+    // 💳 CREATE CARTE
+    // =========================
+    private CarteFidelite createCarte(User user) {
+        return CarteFidelite.builder()
+                .user(user)
+                .points(0)
+                .level(Level.SILVER)
+                .dateExpiration(LocalDate.now().plusYears(1))
+                .build();
     }
 
     // =========================
