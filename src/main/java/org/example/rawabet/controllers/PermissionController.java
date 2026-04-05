@@ -2,7 +2,7 @@ package org.example.rawabet.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.PermissionResponse;
-import org.example.rawabet.services.PermissionService;
+import org.example.rawabet.services.IService.user.IPermissionService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PermissionController {
 
-    private final PermissionService permissionService;
+    private final IPermissionService permissionService;
 
     // ✅ GET ALL
     @GetMapping("/all")

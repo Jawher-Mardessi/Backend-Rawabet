@@ -5,10 +5,10 @@ import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;
+import java.util.Set;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(exclude = {"permissions", "users"})
@@ -19,18 +19,16 @@ public class Role {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String name; // SUPER_ADMIN, ADMIN_CINEMA, CLIENT...
+    private String name;
 
-    // 🔥 relation avec permissions
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "role_permissions",
             joinColumns = @JoinColumn(name = "role_id"),
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
-    private List<Permission> permissions;
+    private Set<Permission> permissions;  // ✅ Set au lieu de List
 
-    // 🔁 relation inverse avec User (optionnelle mais PRO)
     @ManyToMany(mappedBy = "roles")
     @JsonIgnore
     private List<User> users;

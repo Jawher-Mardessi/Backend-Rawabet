@@ -1,8 +1,7 @@
 package org.example.rawabet.controllers;
 
-import lombok.RequiredArgsConstructor;
 import org.example.rawabet.entities.CarteFidelite;
-import org.example.rawabet.services.ICarteFideliteService;
+import org.example.rawabet.services.IService.carteFidelite.ICarteFideliteService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

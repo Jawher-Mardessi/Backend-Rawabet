@@ -1,6 +1,9 @@
 package org.example.rawabet.entities;
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.rawabet.entities.cinema.Film;
+import org.example.rawabet.entities.cinema.SalleCinema;
+import org.example.rawabet.entities.cinema.Seat;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,8 +27,7 @@ public class Seance {
     @OneToMany(mappedBy = "seance")
     private List<ReservationCinema> reservations;
 
-    @OneToMany(mappedBy = "seance")
-    private List<Seat> seats;
+
 
     public Long getId() {
         return id;
@@ -83,11 +85,4 @@ public class Seance {
         this.reservations = reservations;
     }
 
-    public List<Seat> getSeats() {
-        return seats;
-    }
-
-    public void setSeats(List<Seat> seats) {
-        this.seats = seats;
-    }
 }

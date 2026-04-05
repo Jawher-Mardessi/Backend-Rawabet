@@ -1,7 +1,8 @@
 package org.example.rawabet.controllers;
 
 import org.example.rawabet.entities.ReservationEvenement;
-import org.example.rawabet.services.IReservationEvenementService;
+import org.example.rawabet.services.IService.evenement.IReservationEvenementService;
+import org.example.rawabet.services.IService.user.IAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class ReservationEvenementController {
     private IReservationEvenementService reservationEvenementService;
 
     @Autowired
-    private org.example.rawabet.services.IAuthService authService;
+    private IAuthService authService;
 
     @PostMapping
     public ResponseEntity<ReservationEvenement> addReservation(@RequestBody ReservationEvenement reservation) {

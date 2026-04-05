@@ -8,11 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -31,7 +33,6 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 🔥 1. IGNORER /auth/**
         if (request.getServletPath().startsWith("/auth")) {
             filterChain.doFilter(request, response);
             return;
@@ -39,39 +40,35 @@ public class JwtFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // 🔥 2. Pas de token → continuer
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            // 🔥 3. extraire token
             String token = authHeader.substring(7);
-
-            // 🔥 4. extraire email
             String email = jwtService.extractEmail(token);
 
-            // 🔥 5. récupérer user
-            User user = userRepository.findByEmail(email).orElse(null);
+            // ✅ Une seule requête, tout est chargé
+            User user = userRepository.findByEmailWithRolesAndPermissions(email).orElse(null);
 
             if (user != null) {
 
+                List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                        .flatMap(role -> role.getPermissions().stream())
+                        .map(p -> new SimpleGrantedAuthority(p.getName()))
+                        .toList();
+
+                System.out.println("✅ Authorities : " + authorities); // supprime après test
+
                 UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                user.getRoles().stream()
-                                        .flatMap(role -> role.getPermissions().stream())
-                                        .map(permission -> new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()))
-                                        .toList()
-                        );
+                        new UsernamePasswordAuthenticationToken(user, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
 
         } catch (Exception e) {
-            System.out.println("JWT error ignored: " + e.getMessage());
+            System.out.println("JWT error: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

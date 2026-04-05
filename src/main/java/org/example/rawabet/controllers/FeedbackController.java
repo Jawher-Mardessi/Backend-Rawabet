@@ -1,7 +1,7 @@
 package org.example.rawabet.controllers;
 
 import org.example.rawabet.entities.Feedback;
-import org.example.rawabet.services.IFeedbackService;
+import org.example.rawabet.services.IService.feedback.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

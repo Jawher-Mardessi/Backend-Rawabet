@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.RegisterRequest;
 import org.example.rawabet.dto.UserResponse;
-import org.example.rawabet.services.IUserService;
+import org.example.rawabet.services.IService.user.IUserService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,8 +1,7 @@
 package org.example.rawabet.controllers;
 
-import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.LoginRequest;
-import org.example.rawabet.services.AuthServiceImpl;
+import org.example.rawabet.services.ServiceImpl.user.AuthServiceImpl;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

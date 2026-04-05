@@ -12,9 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
@@ -34,6 +33,11 @@ public class DataInitializer {
             createPermission("CINEMA", "READ");
             createPermission("CINEMA", "UPDATE");
             createPermission("CINEMA", "DELETE");
+
+            createPermission("FILM", "CREATE");
+            createPermission("FILM", "READ");
+            createPermission("FILM", "UPDATE");
+            createPermission("FILM", "DELETE");
 
             createPermission("EVENT", "CREATE");
             createPermission("EVENT", "READ");
@@ -56,23 +60,29 @@ public class DataInitializer {
             Role client = createRole("CLIENT");
 
             // 🔗 ASSIGN PERMISSIONS
-            adminCinema.setPermissions(permissionRepository.findByModule("CINEMA"));
-            adminEvent.setPermissions(permissionRepository.findByModule("EVENT"));
-            adminFormation.setPermissions(permissionRepository.findByModule("FORMATION"));
 
-            // 🔥 SUPER ADMIN → ALL + ADMIN_MANAGE
+            // ✅ FIX : ADMIN_CINEMA reçoit CINEMA_* + FILM_* et est bien sauvegardé
+            Set<Permission> cinemaPermissions = new HashSet<>(permissionRepository.findByModule("CINEMA"));
+            cinemaPermissions.addAll(permissionRepository.findByModule("FILM"));
+            adminCinema.setPermissions(cinemaPermissions);
+            roleRepository.save(adminCinema);
+
+            // ✅ FIX : adminEvent sauvegardé
+            adminEvent.setPermissions(new HashSet<>(permissionRepository.findByModule("EVENT")));
+            roleRepository.save(adminEvent);
+
+            // ✅ FIX : adminFormation sauvegardé
+            adminFormation.setPermissions(new HashSet<>(permissionRepository.findByModule("FORMATION")));
+            roleRepository.save(adminFormation);
+
+            // CLIENT : aucune permission spéciale
+            roleRepository.save(client);
+
+            // SUPER_ADMIN : toutes les permissions
             HashSet<Permission> allPermissions = new HashSet<>(permissionRepository.findAll());
             allPermissions.add(adminManage);
-
-            superAdmin.setPermissions(new ArrayList<>(allPermissions));
-
-            roleRepository.saveAll(List.of(
-                    superAdmin,
-                    adminCinema,
-                    adminEvent,
-                    adminFormation,
-                    client
-            ));
+            superAdmin.setPermissions(allPermissions);
+            roleRepository.save(superAdmin);
 
             createSuperAdmin();
 
@@ -88,7 +98,7 @@ public class DataInitializer {
                     Permission permission = new Permission();
                     permission.setModule(module);
                     permission.setAction(action);
-                    permission.setName(name); // ⚠️ IMPORTANT
+                    permission.setName(name);
                     return permissionRepository.save(permission);
                 });
     }
@@ -113,7 +123,7 @@ public class DataInitializer {
             admin.setNom("SuperAdmin");
             admin.setEmail("admin@test.com");
             admin.setPassword(passwordEncoder.encode("123456"));
-            admin.setRoles(List.of(role));
+            admin.setRoles(new HashSet<>(Set.of(role)));
 
             userRepository.save(admin);
 

@@ -1,7 +1,7 @@
 package org.example.rawabet.controllers;
 
 import org.example.rawabet.entities.Ticket;
-import org.example.rawabet.services.ITicketService;
+import org.example.rawabet.services.IService.reservationCinema.ITicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

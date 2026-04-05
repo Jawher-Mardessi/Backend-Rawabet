@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.RoleRequest;
 import org.example.rawabet.dto.RoleResponse;
-import org.example.rawabet.services.RoleService;
+import org.example.rawabet.services.IService.user.IRoleService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RoleController {
 
-    private final RoleService roleService;
+    private final IRoleService roleService;
 
     // 🔐 GET ALL ROLES (ADMIN ONLY)
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
