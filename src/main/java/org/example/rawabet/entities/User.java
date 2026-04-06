@@ -14,6 +14,7 @@ public class User {
     private String nom;
     @Column(unique = true)
     private String email;
+    @JsonIgnore
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)

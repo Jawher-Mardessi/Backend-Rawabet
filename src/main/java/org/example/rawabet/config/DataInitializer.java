@@ -28,6 +28,11 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initData() {
         return args -> {
+            // ✅ Si déjà initialisé → skip tout
+            if (roleRepository.count() > 0) {
+                System.out.println("✅ RBAC already initialized — skipping");
+                return;
+            }
 
             // 🔐 PERMISSIONS METIER
             createPermission("CINEMA", "CREATE");

@@ -23,4 +23,10 @@ public class AuthController {
     public String test() {
         return "OK";
     }
+
+    @PostMapping("/logout")
+    public String logout() {
+        // côté client → supprimer le token du localStorage/cookie
+        return "Logged out successfully";
+    }
 }

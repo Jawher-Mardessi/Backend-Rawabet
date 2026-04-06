@@ -2,6 +2,7 @@ package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.CarteFideliteResponse;
+import org.example.rawabet.dto.FidelityHistoryResponse;
 import org.example.rawabet.entities.CarteFidelite;
 import org.example.rawabet.entities.FidelityHistory;
 import org.example.rawabet.entities.User;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,19 +30,25 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
     // =========================
     @Override
     public CarteFideliteResponse getMyCarte() {
-
         User user = authService.getAuthenticatedUser();
-
         CarteFidelite carte = carteRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Carte not found"));
-
         handleExpiration(carte);
-
         return mapToResponse(carte);
     }
 
     // =========================
-    // 🔥 ADD POINTS (INTERNAL)
+    // 🔐 GET CARTE BY USER (ADMIN)
+    // =========================
+    @Override
+    public CarteFideliteResponse getCarteByUser(User user) {
+        CarteFidelite carte = carteRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Carte not found"));
+        return mapToResponse(carte);
+    }
+
+    // =========================
+    // 🔥 ADD POINTS (SYSTÈME)
     // =========================
     @Override
     @Transactional
@@ -49,8 +57,6 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
         if (points <= 0) {
             throw new RuntimeException("Points must be positive");
         }
-
-        // 🔥 anti abus (bonus pro)
         if (points > 100) {
             throw new RuntimeException("Suspicious points value");
         }
@@ -62,19 +68,49 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
 
         int newPoints = carte.getPoints() + points;
         carte.setPoints(newPoints);
-
         carte.setLevel(calculateLevel(newPoints));
-
         carteRepository.save(carte);
 
-        // 🧾 audit
-        FidelityHistory history = new FidelityHistory();
-        history.setUser(user);
-        history.setAction(action);
-        history.setPoints(points);
-        history.setCreatedAt(Instant.now());
+        saveHistory(user, action, points);
+    }
 
-        historyRepository.save(history);
+    // =========================
+    // 👑 ADD POINTS (ADMIN)
+    // =========================
+    @Override
+    @Transactional
+    public void addPointsByAdmin(User user, int points, ActionType action) {
+
+        if (points <= 0) {
+            throw new RuntimeException("Points must be positive");
+        }
+        if (points > 1000) {
+            throw new RuntimeException("Max 1000 points par opération admin");
+        }
+
+        CarteFidelite carte = carteRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Carte not found"));
+
+        handleExpiration(carte);
+
+        int newPoints = carte.getPoints() + points;
+        carte.setPoints(newPoints);
+        carte.setLevel(calculateLevel(newPoints));
+        carteRepository.save(carte);
+
+        saveHistory(user, action, points);
+    }
+
+    // =========================
+    // 📋 GET MY HISTORY
+    // =========================
+    @Override
+    public List<FidelityHistoryResponse> getMyHistory() {
+        User user = authService.getAuthenticatedUser();
+        return historyRepository.findByUser(user)
+                .stream()
+                .map(this::mapToHistoryResponse)
+                .toList();
     }
 
     // =========================
@@ -85,6 +121,7 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
             carte.setPoints(0);
             carte.setDateExpiration(LocalDate.now().plusYears(1));
             carte.setLevel(Level.SILVER);
+            carteRepository.save(carte);
         }
     }
 
@@ -98,13 +135,36 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
     }
 
     // =========================
-    // 🔥 MAPPING DTO
+    // 🧾 SAVE HISTORY
+    // =========================
+    private void saveHistory(User user, ActionType action, int points) {
+        FidelityHistory history = new FidelityHistory();
+        history.setUser(user);
+        history.setAction(action);
+        history.setPoints(points);
+        history.setCreatedAt(Instant.now());
+        historyRepository.save(history);
+    }
+
+    // =========================
+    // 🔥 MAPPING CARTE DTO
     // =========================
     private CarteFideliteResponse mapToResponse(CarteFidelite carte) {
         return CarteFideliteResponse.builder()
                 .points(carte.getPoints())
                 .dateExpiration(carte.getDateExpiration())
                 .level(carte.getLevel())
+                .build();
+    }
+
+    // =========================
+    // 🔥 MAPPING HISTORY DTO
+    // =========================
+    private FidelityHistoryResponse mapToHistoryResponse(FidelityHistory h) {
+        return FidelityHistoryResponse.builder()
+                .action(h.getAction())
+                .points(h.getPoints())
+                .createdAt(h.getCreatedAt())
                 .build();
     }
 }
