@@ -4,4 +4,5 @@ import org.example.rawabet.entities.ReservationCinema;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReservationCinemaRepository extends JpaRepository<ReservationCinema, Long> {
+    boolean existsBySeanceIdAndSeatId(Long seanceId, Long seatId);
 }

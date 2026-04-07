@@ -1,17 +1,19 @@
 package org.example.rawabet.services;
-import org.example.rawabet.entities.Seance;
+
+import org.example.rawabet.dto.seance.request.CreateSeanceRequest;
+import org.example.rawabet.dto.seance.response.SeanceResponse;
 
 import java.util.List;
 
 public interface ISeanceService {
 
-    Seance addSeance(Seance seance);
+    SeanceResponse addSeance(CreateSeanceRequest request);
 
-    Seance updateSeance(Seance seance);
+    SeanceResponse updateSeance(Long id, CreateSeanceRequest request);
 
     void deleteSeance(Long id);
 
-    Seance getSeanceById(Long id);
+    SeanceResponse getSeanceById(Long id);
 
-    List<Seance> getAllSeances();
+    List<SeanceResponse> getAllSeances();
 }

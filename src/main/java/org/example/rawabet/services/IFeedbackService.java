@@ -1,18 +1,20 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.entities.Feedback;
+import org.example.rawabet.dto.feedback.request.CreateFeedbackRequest;
+import org.example.rawabet.dto.feedback.request.UpdateFeedbackRequest;
+import org.example.rawabet.dto.feedback.response.FeedbackResponse;
 
 import java.util.List;
 
 public interface IFeedbackService {
 
-    Feedback addFeedback(Feedback feedback);
+    FeedbackResponse addFeedback(CreateFeedbackRequest request);
 
-    Feedback updateFeedback(Feedback feedback);
+    FeedbackResponse updateFeedback(UpdateFeedbackRequest request);
 
     void deleteFeedback(Long id);
 
-    Feedback getById(Long id);
+    FeedbackResponse getById(Long id);
 
-    List<Feedback> getAll();
+    List<FeedbackResponse> getAll();
 }

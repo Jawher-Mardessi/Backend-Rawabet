@@ -1,5 +1,7 @@
 package org.example.rawabet.services;
 
+import org.example.rawabet.dto.reservationCinema.request.CreateReservationCinemaRequest;
+import org.example.rawabet.dto.reservationCinema.response.ReservationCinemaResponse;
 import org.example.rawabet.entities.ReservationCinema;
 
 import java.util.List;
@@ -16,5 +18,5 @@ public interface IReservationCinemaService {
 
     List<ReservationCinema> getAllReservations();
 
-    ReservationCinema reserverAvecTickets(Long userId, Long seanceId, int nbTickets);
+    ReservationCinemaResponse reserver(CreateReservationCinemaRequest request);
 }
