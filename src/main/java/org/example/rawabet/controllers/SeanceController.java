@@ -1,27 +1,28 @@
 package org.example.rawabet.controllers;
 
-import org.example.rawabet.entities.Seance;
+import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.seance.request.CreateSeanceRequest;
+import org.example.rawabet.dto.seance.response.SeanceResponse;
 import org.example.rawabet.services.ISeanceService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/seances")
+@RequiredArgsConstructor
 public class SeanceController {
 
-    @Autowired
-    private ISeanceService service;
+    private final ISeanceService service;
 
     @PostMapping("/add")
-    public Seance add(@RequestBody Seance s){
-        return service.addSeance(s);
+    public SeanceResponse add(@RequestBody CreateSeanceRequest request){
+        return service.addSeance(request);
     }
 
-    @PutMapping("/update")
-    public Seance update(@RequestBody Seance s){
-        return service.updateSeance(s);
+    @PutMapping("/update/{id}")
+    public SeanceResponse update(@PathVariable Long id, @RequestBody CreateSeanceRequest request){
+        return service.updateSeance(id, request);
     }
 
     @DeleteMapping("/delete/{id}")
@@ -30,12 +31,12 @@ public class SeanceController {
     }
 
     @GetMapping("/{id}")
-    public Seance getById(@PathVariable Long id){
+    public SeanceResponse getById(@PathVariable Long id){
         return service.getSeanceById(id);
     }
 
     @GetMapping("/all")
-    public List<Seance> getAll(){
+    public List<SeanceResponse> getAll(){
         return service.getAllSeances();
     }
 }
