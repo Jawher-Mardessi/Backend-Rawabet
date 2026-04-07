@@ -31,47 +31,47 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 🔥 1. IGNORER /auth/**
-        if (request.getServletPath().startsWith("/auth")) {
+        // ✅ FIX : utiliser getRequestURI() au lieu de getServletPath()
+        String path = request.getRequestURI();
+
+        // ✅ ignorer /auth/** et /users/add
+        if (path.contains("/auth/") || path.equals("/rawabet/users/add")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         final String authHeader = request.getHeader("Authorization");
 
-        // 🔥 2. Pas de token → continuer
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            // 🔥 3. extraire token
             String token = authHeader.substring(7);
-
-            // 🔥 4. extraire email
             String email = jwtService.extractEmail(token);
 
-            // 🔥 5. récupérer user
-            User user = userRepository.findByEmail(email).orElse(null);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (user != null) {
+                User user = userRepository.findByEmail(email).orElse(null);
 
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                user.getRoles().stream()
-                                        .flatMap(role -> role.getPermissions().stream())
-                                        .map(permission -> new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()))
-                                        .toList()
-                        );
-
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                if (user != null) {
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                    user,
+                                    null,
+                                    user.getRoles().stream()
+                                            .flatMap(role -> role.getPermissions().stream())
+                                            .map(permission -> new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()))
+                                            .toList()
+                            );
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
 
         } catch (Exception e) {
-            System.out.println("JWT error ignored: " + e.getMessage());
+            System.err.println("JWT error: " + e.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

@@ -1,20 +1,22 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
-import org.example.rawabet.dto.CarteFideliteResponse;
-import org.example.rawabet.dto.FidelityHistoryResponse;
+import org.example.rawabet.dto.*;
 import org.example.rawabet.entities.CarteFidelite;
 import org.example.rawabet.entities.FidelityHistory;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ActionType;
 import org.example.rawabet.enums.Level;
+import org.example.rawabet.enums.RewardType;
 import org.example.rawabet.repositories.CarteFideliteRepository;
 import org.example.rawabet.repositories.FidelityHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.rawabet.repositories.UserRepository;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -24,6 +26,7 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
     private final CarteFideliteRepository carteRepository;
     private final FidelityHistoryRepository historyRepository;
     private final IAuthService authService;
+    private final UserRepository userRepository;
 
     // =========================
     // 🔐 GET MY CARTE
@@ -166,5 +169,154 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
                 .points(h.getPoints())
                 .createdAt(h.getCreatedAt())
                 .build();
+    }
+
+
+    // =========================
+// 🎁 REDEEM REWARD
+// =========================
+    @Override
+    @Transactional
+    public RewardResponse redeemReward(RewardType reward) {
+
+        User user = authService.getAuthenticatedUser();
+
+        CarteFidelite carte = carteRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Carte not found"));
+
+        handleExpiration(carte);
+
+        int cost = reward.getPointsCost();
+
+        // ✅ vérifier points suffisants
+        if (carte.getPoints() < cost) {
+            throw new RuntimeException(
+                    "Points insuffisants — il vous faut " + cost + " pts, vous avez " + carte.getPoints() + " pts"
+            );
+        }
+
+        // ✅ déduire les points
+        int newPoints = carte.getPoints() - cost;
+        carte.setPoints(newPoints);
+        carte.setLevel(calculateLevel(newPoints));
+        carteRepository.save(carte);
+
+        // 🧾 audit
+        saveHistory(user, ActionType.BONUS, -cost);
+
+        return RewardResponse.builder()
+                .reward(reward)
+                .pointsDepensés(cost)
+                .pointsRestants(newPoints)
+                .message("✅ " + reward.getDescription() + " activé avec succès !")
+                .build();
+    }
+
+    // =========================
+// 🎁 GET AVAILABLE REWARDS
+// =========================
+    @Override
+    public List<RewardType> getAvailableRewards() {
+        User user = authService.getAuthenticatedUser();
+        CarteFidelite carte = carteRepository.findByUser(user)
+                .orElseThrow(() -> new RuntimeException("Carte not found"));
+
+        return Arrays.stream(RewardType.values())
+                .filter(r -> carte.getPoints() >= r.getPointsCost())
+                .toList();
+    }
+
+    // =========================
+// 📊 GET STATS (ADMIN)
+// =========================
+    @Override
+    public CarteStatsResponse getStats() {
+        long totalClients = carteRepository.count();
+        long totalSilver = carteRepository.countByLevel(Level.SILVER);
+        long totalGold = carteRepository.countByLevel(Level.GOLD);
+        long totalVip = carteRepository.countByLevel(Level.VIP);
+        long totalPoints = carteRepository.sumAllPoints();
+
+        return CarteStatsResponse.builder()
+                .totalClients(totalClients)
+                .totalSilver(totalSilver)
+                .totalGold(totalGold)
+                .totalVip(totalVip)
+                .totalPointsDistribués(totalPoints)
+                .build();
+    }
+
+    // =========================
+// 🏆 GET TOP CLIENTS (ADMIN)
+// =========================
+    @Override
+    public List<TopClientResponse> getTopClients() {
+        return carteRepository.findTop10ByOrderByPointsDesc()
+                .stream()
+                .map(c -> TopClientResponse.builder()
+                        .nom(c.getUser().getNom())
+                        .email(c.getUser().getEmail())
+                        .points(c.getPoints())
+                        .level(c.getLevel())
+                        .build())
+                .toList();
+    }
+
+    // =========================
+// 💸 TRANSFER POINTS
+// =========================
+    @Override
+    @Transactional
+    public void transferPoints(Long toUserId, int points) {
+
+        // ✅ récupérer user connecté (expéditeur)
+        User fromUser = authService.getAuthenticatedUser();
+
+        // ✅ vérifier points positifs
+        if (points <= 0) {
+            throw new RuntimeException("Points must be positive");
+        }
+
+        // ✅ pas de transfert à soi-même
+        if (fromUser.getId().equals(toUserId)) {
+            throw new RuntimeException("Impossible de transférer à vous-même");
+        }
+
+        // ✅ récupérer destinataire
+        User toUser = userRepository.findById(toUserId)
+                .orElseThrow(() -> new RuntimeException("Destinataire non trouvé"));
+
+        // ✅ récupérer carte expéditeur
+        CarteFidelite fromCarte = carteRepository.findByUser(fromUser)
+                .orElseThrow(() -> new RuntimeException("Carte expéditeur non trouvée"));
+
+        // ✅ vérifier points suffisants
+        if (fromCarte.getPoints() < points) {
+            throw new RuntimeException(
+                    "Points insuffisants — vous avez " + fromCarte.getPoints() + " pts"
+            );
+        }
+
+        // ✅ récupérer carte destinataire
+        CarteFidelite toCarte = carteRepository.findByUser(toUser)
+                .orElseThrow(() -> new RuntimeException("Carte destinataire non trouvée"));
+
+        // ✅ déduire points expéditeur
+        int fromNewPoints = fromCarte.getPoints() - points;
+        fromCarte.setPoints(fromNewPoints);
+        fromCarte.setLevel(calculateLevel(fromNewPoints));
+        carteRepository.save(fromCarte);
+
+        // ✅ ajouter points destinataire
+        int toNewPoints = toCarte.getPoints() + points;
+        toCarte.setPoints(toNewPoints);
+        toCarte.setLevel(calculateLevel(toNewPoints));
+        carteRepository.save(toCarte);
+
+        // 🧾 audit expéditeur
+        saveHistory(fromUser, ActionType.BONUS, -points);
+
+        // 🧾 audit destinataire
+        saveHistory(toUser, ActionType.BONUS, points);
     }
 }

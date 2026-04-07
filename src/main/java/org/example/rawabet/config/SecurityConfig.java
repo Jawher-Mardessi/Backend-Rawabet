@@ -32,6 +32,8 @@ public class SecurityConfig {
                         // PUBLIC
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/add").permitAll()
+                        .requestMatchers("/users/me").authenticated()
+                        .requestMatchers("/users/me/**").authenticated()
 
 
                         // 🔐 ADMIN SYSTEM

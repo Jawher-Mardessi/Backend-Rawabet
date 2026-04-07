@@ -29,4 +29,30 @@ public class AuthController {
         // côté client → supprimer le token du localStorage/cookie
         return "Logged out successfully";
     }
+    // =========================
+// 🔐 FORGOT PASSWORD
+// =========================
+    @PostMapping("/forgot-password")
+    public String forgotPassword(@RequestParam String email) {
+        authService.forgotPassword(email);
+        return "✅ Email de réinitialisation envoyé à " + email;
+    }
+
+    // =========================
+// 🔐 RESET PASSWORD
+// =========================
+    @PostMapping("/reset-password")
+    public String resetPassword(@RequestParam String token,
+                                @RequestParam String newPassword) {
+        authService.resetPassword(token, newPassword);
+        return "✅ Mot de passe réinitialisé avec succès !";
+    }
+    // =========================
+// ✅ VERIFY EMAIL
+// =========================
+    @GetMapping("/verify-email")
+    public String verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return "✅ Email vérifié avec succès — vous pouvez maintenant vous connecter !";
+    }
 }

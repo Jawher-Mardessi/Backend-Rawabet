@@ -1,10 +1,10 @@
 package org.example.rawabet.controllers;
 
 import lombok.RequiredArgsConstructor;
-import org.example.rawabet.dto.CarteFideliteResponse;
-import org.example.rawabet.dto.FidelityHistoryResponse;
+import org.example.rawabet.dto.*;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ActionType;
+import org.example.rawabet.enums.RewardType;
 import org.example.rawabet.repositories.UserRepository;
 import org.example.rawabet.services.ICarteFideliteService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,5 +44,44 @@ public class CarteFideliteController {
     @PreAuthorize("hasAuthority('FIDELITY_READ')")
     public List<FidelityHistoryResponse> getMyHistory() { // ✅ DTO
         return carteService.getMyHistory();
+    }
+
+    // 🎁 VOIR REWARDS DISPONIBLES
+    @GetMapping("/rewards")
+    @PreAuthorize("hasAuthority('FIDELITY_READ')")
+    public List<RewardType> getAvailableRewards() {
+        return carteService.getAvailableRewards();
+    }
+
+    // 🎁 UTILISER UN REWARD
+    @PostMapping("/redeem")
+    @PreAuthorize("hasAuthority('FIDELITY_READ')")
+    public RewardResponse redeemReward(@RequestParam RewardType reward) {
+        return carteService.redeemReward(reward);
+    }
+
+    // 📊 STATS (SUPER_ADMIN)
+    @GetMapping("/admin/stats")
+    @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
+    public CarteStatsResponse getStats() {
+        return carteService.getStats();
+    }
+
+    // 🏆 TOP 10 (SUPER_ADMIN)
+    @GetMapping("/admin/top")
+    @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
+    public List<TopClientResponse> getTopClients() {
+        return carteService.getTopClients();
+    }
+
+    // 💸 TRANSFERT DE POINTS
+    @PostMapping("/transfer")
+    @PreAuthorize("hasAuthority('FIDELITY_READ')")
+    public String transferPoints(
+            @RequestParam Long toUserId,
+            @RequestParam int points) {
+
+        carteService.transferPoints(toUserId, points);
+        return "✅ " + points + " points transférés avec succès !";
     }
 }

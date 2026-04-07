@@ -13,6 +13,7 @@ public class UserResponse {
     private String nom;
     private String email;
     private List<String> roles;
+    private boolean isActive;
 
     public Long getId() {
         return id;
