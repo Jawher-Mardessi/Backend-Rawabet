@@ -1,6 +1,8 @@
 package org.example.rawabet.controllers;
 
-import org.example.rawabet.entities.Feedback;
+import org.example.rawabet.dto.feedback.request.CreateFeedbackRequest;
+import org.example.rawabet.dto.feedback.request.UpdateFeedbackRequest;
+import org.example.rawabet.dto.feedback.response.FeedbackResponse;
 import org.example.rawabet.services.IFeedbackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +17,13 @@ public class FeedbackController {
     private IFeedbackService service;
 
     @PostMapping("/add")
-    public Feedback add(@RequestBody Feedback f){
-        return service.addFeedback(f);
+    public FeedbackResponse add(@RequestBody CreateFeedbackRequest request){
+        return service.addFeedback(request);
     }
 
     @PutMapping("/update")
-    public Feedback update(@RequestBody Feedback f){
-        return service.updateFeedback(f);
+    public FeedbackResponse update(@RequestBody UpdateFeedbackRequest request){
+        return service.updateFeedback(request);
     }
 
     @DeleteMapping("/delete/{id}")
@@ -30,12 +32,12 @@ public class FeedbackController {
     }
 
     @GetMapping("/{id}")
-    public Feedback getById(@PathVariable Long id){
+    public FeedbackResponse getById(@PathVariable Long id){
         return service.getById(id);
     }
 
     @GetMapping("/all")
-    public List<Feedback> getAll(){
+    public List<FeedbackResponse> getAll(){
         return service.getAll();
     }
 }

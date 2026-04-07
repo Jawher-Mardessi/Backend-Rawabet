@@ -1,15 +1,17 @@
 package org.example.rawabet.services;
 
+import org.example.rawabet.dto.reservationCinema.request.CreateReservationCinemaRequest;
+import org.example.rawabet.dto.reservationCinema.response.ReservationCinemaResponse;
 import org.example.rawabet.entities.ReservationCinema;
 import org.example.rawabet.entities.Seance;
-import org.example.rawabet.entities.Ticket;
+import org.example.rawabet.entities.Seat;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ReservationStatus;
-import org.example.rawabet.enums.TicketStatus;
 import org.example.rawabet.repositories.ReservationCinemaRepository;
 import org.example.rawabet.repositories.SeanceRepository;
-import org.example.rawabet.repositories.TicketRepository;
+import org.example.rawabet.repositories.SeatRepository;
 import org.example.rawabet.repositories.UserRepository;
+import org.example.rawabet.services.IReservationCinemaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
 
     @Autowired
     private ReservationCinemaRepository reservationRepository;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -28,7 +31,7 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
     private SeanceRepository seanceRepository;
 
     @Autowired
-    private TicketRepository ticketRepository;
+    private SeatRepository seatRepository;
 
     @Override
     public ReservationCinema addReservation(ReservationCinema reservation) {
@@ -54,34 +57,42 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
     public List<ReservationCinema> getAllReservations() {
         return reservationRepository.findAll();
     }
-    @Override
-    public ReservationCinema reserverAvecTickets(Long userId, Long seanceId, int nbTickets) {
 
-        // 🔴 1. récupérer user
-        User user = userRepository.findById(userId)
+    @Override
+    public ReservationCinemaResponse reserver(CreateReservationCinemaRequest request) {
+
+        User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 🔴 2. récupérer séance
-        Seance seance = seanceRepository.findById(seanceId)
+        Seance seance = seanceRepository.findById(request.getSeanceId())
                 .orElseThrow(() -> new RuntimeException("Seance not found"));
 
-        // 🔴 3. créer réservation
+        Seat seat = seatRepository.findById(request.getSeatId())
+                .orElseThrow(() -> new RuntimeException("Seat not found"));
+
+        boolean alreadyReserved = reservationRepository
+                .existsBySeanceIdAndSeatId(request.getSeanceId(), request.getSeatId());
+
+        if (alreadyReserved) {
+            throw new RuntimeException("Seat already reserved for this seance");
+        }
+
         ReservationCinema reservation = new ReservationCinema();
         reservation.setUser(user);
         reservation.setSeance(seance);
+        reservation.setSeat(seat);
         reservation.setDateReservation(LocalDate.now());
         reservation.setStatut(ReservationStatus.PENDING);
 
         reservation = reservationRepository.save(reservation);
 
-        // 🔥 4. créer tickets automatiquement
-        for (int i = 0; i < nbTickets; i++) {
-            Ticket ticket = new Ticket();
-            ticket.setStatut(TicketStatus.RESERVED);
-            ticket.setReservationCinema(reservation);
-            ticketRepository.save(ticket);
-        }
-
-        return reservation;
+        return ReservationCinemaResponse.builder()
+                .id(reservation.getId())
+                .dateReservation(reservation.getDateReservation().toString())
+                .statut(reservation.getStatut().name())
+                .userId(user.getId())
+                .seanceId(seance.getId())
+                .seatId(seat.getId())
+                .build();
     }
 }
