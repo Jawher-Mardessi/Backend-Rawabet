@@ -2,16 +2,13 @@ package org.example.rawabet.dto;
 
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.List;
+import org.example.rawabet.enums.Level;
 
 @Data
 @Builder
-public class UserResponse {
-
-    private Long id;
+public class TopClientResponse {
     private String nom;
     private String email;
-    private List<String> roles;
-    private boolean isActive;
+    private int points;
+    private Level level;
 }

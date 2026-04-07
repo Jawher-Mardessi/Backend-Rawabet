@@ -1,9 +1,9 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.dto.CarteFideliteResponse;
-import org.example.rawabet.dto.FidelityHistoryResponse;
+import org.example.rawabet.dto.*;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ActionType;
+import org.example.rawabet.enums.RewardType;
 
 import java.util.List;
 
@@ -23,4 +23,14 @@ public interface ICarteFideliteService {
 
     // 📋 CLIENT — voir son historique
     List<FidelityHistoryResponse> getMyHistory();
+
+    RewardResponse redeemReward(RewardType reward);
+    List<RewardType> getAvailableRewards();
+    // 📊 ADMIN — stats globales
+    CarteStatsResponse getStats();
+
+    // 🏆 ADMIN — top 10 clients
+    List<TopClientResponse> getTopClients();
+    void transferPoints(Long toUserId, int points);
+
 }

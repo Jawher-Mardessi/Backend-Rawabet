@@ -1,18 +1,25 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.ChangePasswordRequest;
 import org.example.rawabet.dto.RegisterRequest;
+import org.example.rawabet.dto.UpdateProfileRequest;
 import org.example.rawabet.dto.UserResponse;
 import org.example.rawabet.entities.CarteFidelite;
 import org.example.rawabet.entities.Role;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.Level;
 import org.example.rawabet.repositories.CarteFideliteRepository;
+import org.example.rawabet.repositories.EmailVerificationTokenRepository;
 import org.example.rawabet.repositories.RoleRepository;
 import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.rawabet.entities.EmailVerificationToken;
+import org.example.rawabet.repositories.EmailVerificationTokenRepository;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +33,9 @@ public class UserServiceImpl implements IUserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final CarteFideliteRepository carteRepository;
+    private final IAuthService authService;
+    private final EmailVerificationTokenRepository verificationTokenRepository;
+    private final EmailService emailService;
 
     // =========================
     // 👤 REGISTER (CLIENT)
@@ -33,7 +43,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public UserResponse register(RegisterRequest request) {
-
         checkEmail(request.getEmail());
 
         Role clientRole = roleRepository.findByName("CLIENT")
@@ -44,12 +53,11 @@ public class UserServiceImpl implements IUserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(List.of(clientRole));
+        user.setActive(true); // ✅ inactif jusqu'à confirmation email
 
         User savedUser = userRepository.save(user);
-
-        // 💳 création carte
         carteRepository.save(createCarte(savedUser));
-
+       // sendVerificationEmail(savedUser);
         return mapToResponse(savedUser);
     }
 
@@ -59,7 +67,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public UserResponse createUserByAdmin(RegisterRequest request) {
-
         checkEmail(request.getEmail());
 
         if (request.getRoles() == null || request.getRoles().isEmpty()) {
@@ -71,14 +78,12 @@ public class UserServiceImpl implements IUserService {
                 .map(String::toUpperCase)
                 .toList();
 
-        // 🔐 sécurité
         if (roleNames.contains("SUPER_ADMIN")) {
             throw new RuntimeException("Cannot assign SUPER_ADMIN role");
         }
 
         List<Role> roles = roleRepository.findByNameIn(roleNames);
 
-        // 🔥 validation stricte
         if (roles.size() != roleNames.size()) {
             throw new RuntimeException("Some roles are invalid");
         }
@@ -88,12 +93,11 @@ public class UserServiceImpl implements IUserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(roles);
+        user.setActive(true); // ✅ inactif jusqu'à confirmation email
 
         User savedUser = userRepository.save(user);
-
-        // 💳 création carte
         carteRepository.save(createCarte(savedUser));
-
+       // sendVerificationEmail(savedUser);
         return mapToResponse(savedUser);
     }
 
@@ -102,7 +106,6 @@ public class UserServiceImpl implements IUserService {
     // =========================
     @Override
     public UserResponse updateUser(Long id, RegisterRequest request) {
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -126,7 +129,6 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     public void deleteUser(Long id) {
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -141,10 +143,8 @@ public class UserServiceImpl implements IUserService {
     // =========================
     @Override
     public UserResponse getUserById(Long id) {
-
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         return mapToResponse(user);
     }
 
@@ -153,11 +153,93 @@ public class UserServiceImpl implements IUserService {
     // =========================
     @Override
     public List<UserResponse> getAllUsers() {
-
         return userRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    // =========================
+    // 👤 GET MY PROFILE
+    // =========================
+    @Override
+    public UserResponse getMyProfile() {
+        User user = authService.getAuthenticatedUser();
+        return mapToResponse(user);
+    }
+
+    // =========================
+    // ✏️ UPDATE MY PROFILE
+    // =========================
+    @Override
+    public UserResponse updateMyProfile(UpdateProfileRequest request) {
+        User user = authService.getAuthenticatedUser();
+
+        user.setNom(request.getNom());
+
+        if (!Objects.equals(user.getEmail(), request.getEmail())) {
+            checkEmail(request.getEmail());
+            user.setEmail(request.getEmail());
+        }
+
+        return mapToResponse(userRepository.save(user));
+    }
+
+    // =========================
+    // 🔐 CHANGE MY PASSWORD
+    // =========================
+    @Override
+    public void changeMyPassword(ChangePasswordRequest request) {
+        User user = authService.getAuthenticatedUser();
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Ancien mot de passe incorrect");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new RuntimeException("Le nouveau mot de passe doit être différent");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    // =========================
+    // 🚫 BAN USER
+    // =========================
+    @Override
+    public void banUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!user.isActive()) {
+            throw new RuntimeException("User déjà banni");
+        }
+
+        boolean isSuperAdmin = user.getRoles().stream()
+                .anyMatch(r -> r.getName().equals("SUPER_ADMIN"));
+        if (isSuperAdmin) {
+            throw new RuntimeException("Impossible de bannir un SUPER_ADMIN");
+        }
+
+        user.setActive(false);
+        userRepository.save(user);
+    }
+
+    // =========================
+    // ✅ UNBAN USER
+    // =========================
+    @Override
+    public void unbanUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.isActive()) {
+            throw new RuntimeException("User déjà actif");
+        }
+
+        user.setActive(true);
+        userRepository.save(user);
     }
 
     // =========================
@@ -189,11 +271,33 @@ public class UserServiceImpl implements IUserService {
                 .id(user.getId())
                 .nom(user.getNom())
                 .email(user.getEmail())
-                .roles(
-                        user.getRoles().stream()
-                                .map(Role::getName)
-                                .toList()
-                )
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .toList())
+                .isActive(user.isActive())
                 .build();
+    }
+
+    // =========================
+// 📧 SEND VERIFICATION EMAIL
+// =========================
+    private void sendVerificationEmail(User user) {
+
+        // supprimer ancien token si existe
+        verificationTokenRepository.deleteByUser(user);
+
+        // générer token
+        String token = UUID.randomUUID().toString();
+
+        // sauvegarder token
+        EmailVerificationToken verificationToken = new EmailVerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(user);
+        verificationToken.setExpiresAt(LocalDateTime.now().plusHours(24));
+
+        verificationTokenRepository.save(verificationToken);
+
+        // envoyer email
+        emailService.sendVerificationEmail(user.getEmail(), token);
     }
 }

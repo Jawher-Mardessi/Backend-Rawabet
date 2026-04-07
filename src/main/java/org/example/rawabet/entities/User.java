@@ -16,6 +16,8 @@ public class User {
     private String email;
     @JsonIgnore
     private String password;
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isActive = true;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
