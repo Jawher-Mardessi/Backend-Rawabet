@@ -20,4 +20,36 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password doit contenir au moins 6 caractères")
     private String password;
     private List<String> roles;
+
+    public @NotBlank(message = "Nom obligatoire") String getNom() {
+        return nom;
+    }
+
+    public void setNom(@NotBlank(message = "Nom obligatoire") String nom) {
+        this.nom = nom;
+    }
+
+    public @Email(message = "Email invalide") @NotBlank(message = "Email obligatoire") String getEmail() {
+        return email;
+    }
+
+    public void setEmail(@Email(message = "Email invalide") @NotBlank(message = "Email obligatoire") String email) {
+        this.email = email;
+    }
+
+    public @Size(min = 6, message = "Password doit contenir au moins 6 caractères") String getPassword() {
+        return password;
+    }
+
+    public void setPassword(@Size(min = 6, message = "Password doit contenir au moins 6 caractères") String password) {
+        this.password = password;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
 }
