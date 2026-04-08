@@ -1,7 +1,7 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.entities.SalleCinema;
 
+import org.example.rawabet.cinema.entities.SalleCinema;
 import java.util.List;
 
 public interface ISalleCinemaService {

@@ -40,6 +40,12 @@ public class DataInitializer {
             createPermission("CINEMA", "UPDATE");
             createPermission("CINEMA", "DELETE");
 
+            // Ajoute ces lignes après les permissions CINEMA
+            createPermission("FILM", "CREATE");
+            createPermission("FILM", "READ");
+            createPermission("FILM", "UPDATE");
+            createPermission("FILM", "DELETE");
+            
             createPermission("EVENT", "CREATE");
             createPermission("EVENT", "READ");
             createPermission("EVENT", "UPDATE");

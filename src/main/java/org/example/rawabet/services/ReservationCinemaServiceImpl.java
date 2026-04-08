@@ -1,17 +1,16 @@
 package org.example.rawabet.services;
 
+import org.example.rawabet.cinema.entities.Seat;
+import org.example.rawabet.cinema.repositories.SeatRepository;
 import org.example.rawabet.dto.reservationCinema.request.CreateReservationCinemaRequest;
 import org.example.rawabet.dto.reservationCinema.response.ReservationCinemaResponse;
 import org.example.rawabet.entities.ReservationCinema;
 import org.example.rawabet.entities.Seance;
-import org.example.rawabet.entities.Seat;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ReservationStatus;
 import org.example.rawabet.repositories.ReservationCinemaRepository;
 import org.example.rawabet.repositories.SeanceRepository;
-import org.example.rawabet.repositories.SeatRepository;
 import org.example.rawabet.repositories.UserRepository;
-import org.example.rawabet.services.IReservationCinemaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
