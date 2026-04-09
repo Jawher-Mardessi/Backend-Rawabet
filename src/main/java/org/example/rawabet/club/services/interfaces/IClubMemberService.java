@@ -1,18 +1,16 @@
 package org.example.rawabet.club.services.interfaces;
 
 import org.example.rawabet.club.dto.ClubMemberResponseDTO;
-import org.example.rawabet.entities.User;
 
 import java.util.List;
 
 public interface IClubMemberService {
 
-    ClubMemberResponseDTO addMember(User user);
+    ClubMemberResponseDTO addMember(Long userId);
 
-    void leaveClub(User user);
+    void leaveClub(Long userId);
 
-    ClubMemberResponseDTO getMember(User user);
+    ClubMemberResponseDTO getMember(Long userId);
 
     List<ClubMemberResponseDTO> getAllMembers();
-
 }

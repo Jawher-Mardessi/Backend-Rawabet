@@ -20,7 +20,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
 public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
 
     private final ClubJoinRequestRepository joinRequestRepository;
@@ -32,78 +31,63 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
 
         User user = authService.getAuthenticatedUser();
 
-        if(clubMemberService.getMember(user) != null){
-
+        // Vérification : déjà membre actif ?
+        if (clubMemberService.getMember(user.getId()) != null) {
             throw new BusinessException("Already a club member");
-
         }
 
+        // Vérification : demande déjà en attente ?
         joinRequestRepository
                 .findByUserAndStatus(user, ClubJoinRequestStatus.PENDING)
                 .ifPresent(r -> {
-
                     throw new BusinessException("Pending request already exists");
-
                 });
 
-        ClubJoinRequest request =
-                ClubJoinRequest.builder()
-                        .user(user)
-                        .motivation(dto.getMotivation())
-                        .status(ClubJoinRequestStatus.PENDING)
-                        .requestDate(LocalDateTime.now())
-                        .build();
+        ClubJoinRequest request = ClubJoinRequest.builder()
+                .user(user)
+                .motivation(dto.getMotivation())
+                .status(ClubJoinRequestStatus.PENDING)
+                .requestDate(LocalDateTime.now())
+                .build();
 
         return map(joinRequestRepository.save(request));
-
     }
 
     @Override
     @Transactional
     public ClubJoinResponseDTO approve(Long id) {
 
-        ClubJoinRequest request =
-                joinRequestRepository.findById(id)
-                        .orElseThrow(() ->
-                                new NotFoundException("Request not found"));
+        ClubJoinRequest request = joinRequestRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Request not found"));
 
-        if(request.getStatus() != ClubJoinRequestStatus.PENDING){
-
+        if (request.getStatus() != ClubJoinRequestStatus.PENDING) {
             throw new BusinessException("Request already processed");
-
         }
 
         request.setStatus(ClubJoinRequestStatus.APPROVED);
-
         request.setProcessedDate(LocalDateTime.now());
 
-        clubMemberService.addMember(request.getUser());
+        // Ajout du membre via userId
+        clubMemberService.addMember(request.getUser().getId());
 
         return map(request);
-
     }
 
     @Override
     @Transactional
     public ClubJoinResponseDTO reject(Long id) {
 
-        ClubJoinRequest request =
-                joinRequestRepository.findById(id)
-                        .orElseThrow(() ->
-                                new NotFoundException("Request not found"));
+        ClubJoinRequest request = joinRequestRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Request not found"));
 
-        if(request.getStatus() != ClubJoinRequestStatus.PENDING){
-
+        if (request.getStatus() != ClubJoinRequestStatus.PENDING) {
             throw new BusinessException("Request already processed");
-
         }
 
         request.setStatus(ClubJoinRequestStatus.REJECTED);
-
         request.setProcessedDate(LocalDateTime.now());
 
         return map(request);
-
     }
 
     @Override
@@ -114,29 +98,17 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
                 .stream()
                 .map(this::map)
                 .toList();
-
     }
 
-    private ClubJoinResponseDTO map(ClubJoinRequest request){
-
+    private ClubJoinResponseDTO map(ClubJoinRequest request) {
         return ClubJoinResponseDTO.builder()
-
                 .id(request.getId())
-
                 .userId(request.getUser().getId())
-
                 .userName(request.getUser().getNom())
-
                 .motivation(request.getMotivation())
-
                 .status(request.getStatus())
-
                 .requestDate(request.getRequestDate())
-
                 .processedDate(request.getProcessedDate())
-
                 .build();
-
     }
-
 }
