@@ -7,7 +7,7 @@ public enum RewardType {
 
     CINEMA_FREE(200, "Séance cinéma gratuite"),
     EVENT_DISCOUNT(100, "Réduction 20% sur événement"),
-    FORMATION_DISCOUNT(150, "Réduction 15% sur formation");
+    CLUB_DISCOUNT(150, "Réduction 15% sur événement club");
 
     private final int pointsCost;
     private final String description;

@@ -11,7 +11,7 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private final String SECRET = "my-super-secret-key-my-super-secret-key"; // 🔥 minimum 32 chars
+    private final String SECRET = "my-super-secret-key-my-super-secret-key";
 
     private Key getSignKey() {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
@@ -20,8 +20,16 @@ public class JwtService {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("name", user.getNom())
+                .claim("email", user.getEmail())
                 .claim("roles", user.getRoles().stream()
                         .map(role -> role.getName())
+                        .toList())
+                .claim("permissions", user.getRoles().stream()
+                        .flatMap(role -> role.getPermissions().stream())
+                        .map(permission -> permission.getName())
+                        .distinct()
                         .toList())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))

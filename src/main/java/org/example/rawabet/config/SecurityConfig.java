@@ -76,10 +76,31 @@ public class SecurityConfig {
                         .requestMatchers("/roles/delete/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/add-with-role").hasAuthority("ADMIN_MANAGE")
 
-                        // 🔐 MODULE
+                        // 🔐 MODULE CINEMA / EVENT
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")
                         .requestMatchers("/event/**").hasAuthority("EVENT_CREATE")
-                        .requestMatchers("/formation/**").hasAuthority("FORMATION_CREATE")
+
+                        // 🌐 CLUB — routes publiques (lecture seule, sans auth)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/events").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/events/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/members").permitAll()
+
+                        // 🔐 CLUB — routes membres (tout user authentifié)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/members/me").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/club/members/leave").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/club/requests").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/club/reservations").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/club/reservations/**").authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/reservations/my").authenticated()
+
+                        // 🔐 CLUB — routes admin club uniquement
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/club").hasAuthority("CLUB_MANAGE")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/club/requests/pending").hasAuthority("CLUB_MANAGE")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/club/requests/**").hasAuthority("CLUB_MANAGE")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/club/events").hasAuthority("CLUB_CREATE")
+
+                        // 🔐 FIDÉLITÉ
                         .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
                         .requestMatchers("/carte/admin/**").hasAuthority("FIDELITY_UPDATE")
 

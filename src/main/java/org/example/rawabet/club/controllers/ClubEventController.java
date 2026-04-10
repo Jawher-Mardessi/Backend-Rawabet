@@ -19,7 +19,7 @@ public class ClubEventController {
     private final IClubEventService eventService;
 
     @PostMapping
-    @PreAuthorize("hasAuthority('EVENT_CREATE')")
+    @PreAuthorize("hasAuthority('CLUB_CREATE')")
     public ClubEventResponseDTO create(
 
             @Valid
