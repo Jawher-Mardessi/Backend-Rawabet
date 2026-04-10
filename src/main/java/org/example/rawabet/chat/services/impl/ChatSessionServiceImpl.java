@@ -8,6 +8,8 @@ import org.example.rawabet.chat.services.interfaces.IChatSessionService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -16,27 +18,36 @@ public class ChatSessionServiceImpl implements IChatSessionService {
 
     private final ChatSessionRepository chatSessionRepository;
 
-    @Override
-    public ChatSessionResponseDTO createChatSession(Long seanceId) {
+    // Durée de fallback si le film n'a pas de durationMinutes renseigné
+    private static final int FALLBACK_DURATION_MINUTES = 120;
 
-        // Génération d'un code unique à 4 chiffres
+    @Override
+    public ChatSessionResponseDTO createChatSession(Long seanceId, String name, int durationMinutes) {
+
+        // Désactiver l'éventuelle session active existante pour cette séance
+        chatSessionRepository.findBySeanceIdAndActiveTrue(seanceId).ifPresent(existing -> {
+            existing.setActive(false);
+            chatSessionRepository.save(existing);
+        });
+
         String code;
         do {
             code = generateCode();
         } while (chatSessionRepository.existsByCode(code));
 
         LocalDateTime now = LocalDateTime.now();
+        int duration = durationMinutes > 0 ? durationMinutes : FALLBACK_DURATION_MINUTES;
 
         ChatSession chat = ChatSession.builder()
                 .seanceId(seanceId)
+                .name(name)
                 .code(code)
-                .isActive(true)
+                .active(true)
                 .startTime(now)
-                .endTime(now.plusMinutes(12))
+                .endTime(now.plusMinutes(duration))
                 .build();
 
-        ChatSession saved = chatSessionRepository.save(chat);
-        return toDTO(saved);
+        return toDTO(chatSessionRepository.save(chat));
     }
 
     @Override
@@ -51,7 +62,6 @@ public class ChatSessionServiceImpl implements IChatSessionService {
         ChatSession chat = chatSessionRepository.findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Chat introuvable avec le code : " + code));
 
-        // Si le temps est écoulé et que le chat est encore marqué actif → on le désactive
         if (chat.isActive() && LocalDateTime.now().isAfter(chat.getEndTime())) {
             chat.setActive(false);
             chatSessionRepository.save(chat);
@@ -61,13 +71,32 @@ public class ChatSessionServiceImpl implements IChatSessionService {
         return chat.isActive();
     }
 
-    // Mapping manuel entité → DTO
+    @Override
+    public ChatSessionResponseDTO closeSession(Long sessionId) {
+        ChatSession chat = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new RuntimeException("Session introuvable : " + sessionId));
+        chat.setActive(false);
+        chat.setEndTime(LocalDateTime.now());
+        return toDTO(chatSessionRepository.save(chat));
+    }
+
+    @Override
+    public Optional<ChatSessionResponseDTO> getActiveSessionBySeanceId(Long seanceId) {
+        return chatSessionRepository.findBySeanceIdAndActiveTrue(seanceId).map(this::toDTO);
+    }
+
+    @Override
+    public List<ChatSessionResponseDTO> getAllSessions() {
+        return chatSessionRepository.findAll().stream().map(this::toDTO).toList();
+    }
+
     private ChatSessionResponseDTO toDTO(ChatSession chat) {
         return ChatSessionResponseDTO.builder()
                 .id(chat.getId())
                 .seanceId(chat.getSeanceId())
+                .name(chat.getName())
                 .code(chat.getCode())
-                .isActive(chat.isActive())
+                .active(chat.isActive())
                 .startTime(chat.getStartTime())
                 .endTime(chat.getEndTime())
                 .createdAt(chat.getCreatedAt())

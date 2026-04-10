@@ -13,8 +13,9 @@ public class ChatSessionResponseDTO {
 
     private Long id;
     private Long seanceId;
+    private String name;
     private String code;
-    private boolean isActive;
+    private boolean active;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDateTime createdAt;

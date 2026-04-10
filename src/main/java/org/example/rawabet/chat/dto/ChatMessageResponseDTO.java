@@ -13,7 +13,12 @@ public class ChatMessageResponseDTO {
 
     private Long id;
     private Long chatSessionId;
+
+    // Expéditeur
     private Long userId;
+    private String username;
+    private String userEmail;
+
     private String content;
     private LocalDateTime createdAt;
 }

@@ -17,11 +17,6 @@ public class ChatWebSocketController {
 
     private final IMessageService messageService;
 
-    // Envoi   : /app/chat/{chatSessionId}/send
-    // Écoute  : /topic/chat/{chatSessionId}
-    //
-    // Chaque séance a son propre canal → les messages n'arrivent qu'aux
-    // participants du bon chat.
     @MessageMapping("/chat/{chatSessionId}/send")
     @SendTo("/topic/chat/{chatSessionId}")
     public ChatMessageResponseDTO send(
@@ -29,14 +24,11 @@ public class ChatWebSocketController {
             ChatMessageRequestDTO request,
             Principal principal) {
 
-        // Vérification que l'utilisateur est bien authentifié
         if (principal == null) {
-            throw new RuntimeException("Vous devez être connecté pour envoyer un message");
+            throw new RuntimeException("Connectez-vous pour participer à la discussion");
         }
 
-        // On force le chatSessionId depuis l'URL (plus fiable que le body)
         request.setChatSessionId(chatSessionId);
-
         return messageService.sendMessage(request);
     }
 }
