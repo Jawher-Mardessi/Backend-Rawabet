@@ -29,7 +29,7 @@ public class ClubJoinRequestController {
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('CLUB_MANAGE')")
     public List<ClubJoinResponseDTO> pending(){
 
         return joinRequestService.pendingRequests();
@@ -37,7 +37,7 @@ public class ClubJoinRequestController {
     }
 
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('CLUB_MANAGE')")
     public ClubJoinResponseDTO approve(
 
             @PathVariable Long id){
@@ -47,7 +47,7 @@ public class ClubJoinRequestController {
     }
 
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    @PreAuthorize("hasAuthority('CLUB_MANAGE')")
     public ClubJoinResponseDTO reject(
 
             @PathVariable Long id){

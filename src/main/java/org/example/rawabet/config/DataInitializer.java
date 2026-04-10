@@ -45,43 +45,43 @@ public class DataInitializer {
             createPermission("FILM", "READ");
             createPermission("FILM", "UPDATE");
             createPermission("FILM", "DELETE");
-            
+
             createPermission("EVENT", "CREATE");
             createPermission("EVENT", "READ");
             createPermission("EVENT", "UPDATE");
             createPermission("EVENT", "DELETE");
 
-            createPermission("FORMATION", "CREATE");
-            createPermission("FORMATION", "READ");
-            createPermission("FORMATION", "UPDATE");
-            createPermission("FORMATION", "DELETE");
+            createPermission("CLUB", "CREATE");
+            createPermission("CLUB", "READ");
+            createPermission("CLUB", "UPDATE");
+            createPermission("CLUB", "DELETE");
+            createPermission("CLUB", "MANAGE");
 
             // 🔥 FIDELITY PERMISSIONS (AJOUT IMPORTANT)
             createPermission("FIDELITY", "READ");
             createPermission("FIDELITY", "UPDATE");
 
             // 🔥 SYSTEM PERMISSION
-            Permission adminManage = createPermission("ADMIN", "MANAGE");
+            createPermission("ADMIN", "MANAGE");
 
             // 🎭 ROLES
             Role superAdmin = createRole("SUPER_ADMIN");
             Role adminCinema = createRole("ADMIN_CINEMA");
             Role adminEvent = createRole("ADMIN_EVENT");
-            Role adminFormation = createRole("ADMIN_FORMATION");
+            Role adminClub = createRole("ADMIN_CLUB");
             Role client = createRole("CLIENT");
 
             // 🔗 ASSIGN PERMISSIONS
 
             adminCinema.setPermissions(permissionRepository.findByModule("CINEMA"));
             adminEvent.setPermissions(permissionRepository.findByModule("EVENT"));
-            adminFormation.setPermissions(permissionRepository.findByModule("FORMATION"));
+            adminClub.setPermissions(permissionRepository.findByModule("CLUB"));
 
             // 🔥 CLIENT → uniquement fidélité
             client.setPermissions(permissionRepository.findByModule("FIDELITY"));
 
-            // 🔥 SUPER ADMIN → ALL + ADMIN_MANAGE
+            // 🔥 SUPER ADMIN → ALL permissions
             HashSet<Permission> allPermissions = new HashSet<>(permissionRepository.findAll());
-            allPermissions.add(adminManage);
 
             superAdmin.setPermissions(new ArrayList<>(allPermissions));
 
@@ -89,7 +89,7 @@ public class DataInitializer {
                     superAdmin,
                     adminCinema,
                     adminEvent,
-                    adminFormation,
+                    adminClub,
                     client
             ));
 
