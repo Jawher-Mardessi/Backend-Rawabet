@@ -1,4 +1,5 @@
 package org.example.rawabet.entities;
+
 import jakarta.persistence.*;
 import lombok.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -12,10 +13,13 @@ public class User {
     private Long id;
 
     private String nom;
+
     @Column(unique = true)
     private String email;
+
     @JsonIgnore
     private String password;
+
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isActive = true;
 
@@ -43,20 +47,12 @@ public class User {
     @JsonIgnore
     private List<Feedback> feedbacks;
 
-    @OneToMany(mappedBy = "user")
-    @JsonIgnore
-    private List<ChatInstantane> messages;
-
     @OneToOne(mappedBy = "user")
     @JsonIgnore
     private CarteFidelite carteFidelite;
 
     @OneToOne(mappedBy = "user")
     private Abonnement abonnement;
-
-    @ManyToMany
-    @JsonIgnore
-    private List<ClubCinema> clubs;
 
     public Long getId() {
         return id;
@@ -90,7 +86,13 @@ public class User {
         this.password = password;
     }
 
+    public List<Role> getRoles() {
+        return roles;
+    }
 
+    public void setRoles(List<Role> roles) {
+        this.roles = roles;
+    }
 
     public List<ReservationCinema> getReservationCinemas() {
         return reservationCinemas;
@@ -124,14 +126,6 @@ public class User {
         this.feedbacks = feedbacks;
     }
 
-    public List<ChatInstantane> getMessages() {
-        return messages;
-    }
-
-    public void setMessages(List<ChatInstantane> messages) {
-        this.messages = messages;
-    }
-
     public CarteFidelite getCarteFidelite() {
         return carteFidelite;
     }
@@ -146,21 +140,5 @@ public class User {
 
     public void setAbonnement(Abonnement abonnement) {
         this.abonnement = abonnement;
-    }
-
-    public List<ClubCinema> getClubs() {
-        return clubs;
-    }
-
-    public void setClubs(List<ClubCinema> clubs) {
-        this.clubs = clubs;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
     }
 }
