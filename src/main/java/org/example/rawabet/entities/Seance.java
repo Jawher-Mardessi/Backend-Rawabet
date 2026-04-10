@@ -1,7 +1,9 @@
 package org.example.rawabet.entities;
 import jakarta.persistence.*;
 import lombok.*;
-
+import org.example.rawabet.cinema.entities.Film;
+import org.example.rawabet.cinema.entities.Seat;
+import org.example.rawabet.cinema.entities.SalleCinema;
 import java.time.LocalDateTime;
 import java.util.List;
 @Entity
@@ -24,8 +26,9 @@ public class Seance {
     @OneToMany(mappedBy = "seance")
     private List<ReservationCinema> reservations;
 
-    @OneToMany(mappedBy = "seance")
-    private List<Seat> seats;
+    @OneToMany
+    @JoinColumn(name = "seance_id")
+    private List<org.example.rawabet.cinema.entities.Seat> seats;
 
     public Long getId() {
         return id;

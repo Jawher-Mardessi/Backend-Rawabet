@@ -1,13 +1,14 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.cinema.entities.Film;
+import org.example.rawabet.cinema.entities.SalleCinema;
+import org.example.rawabet.cinema.repositories.FilmRepository;
+import org.example.rawabet.cinema.repositories.SalleCinemaRepository;
 import org.example.rawabet.dto.seance.request.CreateSeanceRequest;
 import org.example.rawabet.dto.seance.response.SeanceResponse;
-import org.example.rawabet.entities.Film;
-import org.example.rawabet.entities.SalleCinema;
+
 import org.example.rawabet.entities.Seance;
-import org.example.rawabet.repositories.FilmRepository;
-import org.example.rawabet.repositories.SalleCinemaRepository;
 import org.example.rawabet.repositories.SeanceRepository;
 import org.springframework.stereotype.Service;
 

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.rawabet.cinema.entities.Seat;
 import org.example.rawabet.enums.ReservationStatus;
 
 import java.time.LocalDate;
