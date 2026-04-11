@@ -19,6 +19,7 @@ public class FilmMapper {
                 .rating(film.getRating())
                 .releaseDate(film.getReleaseDate())
                 .posterUrl(film.getPosterUrl())
+                .trailerUrl(film.getTrailerUrl())
                 .averageRating(film.getAverageRating())
                 .totalReviews(film.getTotalReviews())
                 .build();
