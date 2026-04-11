@@ -1,4 +1,5 @@
 package org.example.rawabet.entities;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,6 +13,8 @@ public class Seat {
     private int numero;
 
     @ManyToOne
+    @JsonIgnore  // ← ajoute juste cette ligne
+
     private Seance seance;
 
     public Long getId() {

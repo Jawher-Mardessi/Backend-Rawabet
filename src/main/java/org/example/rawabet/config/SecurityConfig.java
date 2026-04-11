@@ -9,6 +9,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -21,6 +24,16 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+                // ✅ CORS géré par Spring Security directement
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(List.of("http://localhost:4200"));
+                    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    config.setAllowedHeaders(List.of("*"));
+                    config.setAllowCredentials(true);
+                    return config;
+                }))
+
                 .csrf(csrf -> csrf.disable())
 
                 .sessionManagement(session ->
@@ -28,26 +41,18 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-
-                        // PUBLIC
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/users/add").permitAll()
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/**").authenticated()
-
-
-                        // 🔐 ADMIN SYSTEM
                         .requestMatchers("/roles/create").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/roles/delete/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/add-with-role").hasAuthority("ADMIN_MANAGE")
-
-                        // 🔐 MODULE
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")
                         .requestMatchers("/event/**").hasAuthority("EVENT_CREATE")
                         .requestMatchers("/formation/**").hasAuthority("FORMATION_CREATE")
                         .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
                         .requestMatchers("/carte/admin/**").hasAuthority("FIDELITY_UPDATE")
-
                         .anyRequest().authenticated()
                 )
 

@@ -1,5 +1,6 @@
 package org.example.rawabet.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +16,8 @@ import java.util.List;
 @NoArgsConstructor
 public class Film {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String titre;
@@ -26,8 +28,11 @@ public class Film {
     private String trailerUrl;
 
     @OneToMany(mappedBy = "film")
+    @JsonIgnore
     private List<Seance> seances;
+
     @OneToMany(mappedBy = "film")
+    @JsonIgnore
     private List<Feedback> feedbacks;
 
     public Long getId() {

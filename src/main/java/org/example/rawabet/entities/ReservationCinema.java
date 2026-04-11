@@ -1,5 +1,6 @@
 package org.example.rawabet.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -35,5 +36,6 @@ public class ReservationCinema {
     private Seat seat;
 
     @OneToOne
+    @JsonIgnore
     private Paiement paiement;
 }
