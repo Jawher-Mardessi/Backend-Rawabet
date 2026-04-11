@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,12 +32,10 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
 
         User user = authService.getAuthenticatedUser();
 
-        // Vérification : déjà membre actif ?
         if (clubMemberService.getMember(user.getId()) != null) {
             throw new BusinessException("Already a club member");
         }
 
-        // Vérification : demande déjà en attente ?
         joinRequestRepository
                 .findByUserAndStatus(user, ClubJoinRequestStatus.PENDING)
                 .ifPresent(r -> {
@@ -67,7 +66,6 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
         request.setStatus(ClubJoinRequestStatus.APPROVED);
         request.setProcessedDate(LocalDateTime.now());
 
-        // Ajout du membre via userId
         clubMemberService.addMember(request.getUser().getId());
 
         return map(request);
@@ -92,12 +90,20 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
 
     @Override
     public List<ClubJoinResponseDTO> pendingRequests() {
-
         return joinRequestRepository
                 .findByStatus(ClubJoinRequestStatus.PENDING)
                 .stream()
                 .map(this::map)
                 .toList();
+    }
+
+    // ✅ AJOUT : dernière demande de l'utilisateur connecté (tous statuts)
+    @Override
+    public Optional<ClubJoinResponseDTO> getMyRequest() {
+        User user = authService.getAuthenticatedUser();
+        return joinRequestRepository
+                .findFirstByUserOrderByRequestDateDesc(user)
+                .map(this::map);
     }
 
     private ClubJoinResponseDTO map(ClubJoinRequest request) {
