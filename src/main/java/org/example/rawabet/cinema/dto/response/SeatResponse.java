@@ -6,7 +6,6 @@ import org.example.rawabet.cinema.enums.SeatType;
 
 @Data
 @Builder
-
 public class SeatResponse {
 
     private Long id;
@@ -17,6 +16,6 @@ public class SeatResponse {
 
     private SeatType seatType;
 
-    private String rowLabel;
+    private Boolean isActive;
 
 }
