@@ -17,14 +17,17 @@ public class ClubMemberController {
 
     private final IClubMemberService clubMemberService;
 
-    // 👤 Mon profil membre
+    // ✅ CORRIGÉ : retourne 404 si l'utilisateur n'est pas membre (au lieu de 200 + null)
     @GetMapping("/me")
     public ResponseEntity<ClubMemberResponseDTO> getMyMembership() {
         Long userId = getAuthenticatedUserId();
-        return ResponseEntity.ok(clubMemberService.getMember(userId));
+        ClubMemberResponseDTO member = clubMemberService.getMember(userId);
+        if (member == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(member);
     }
 
-    // 🚪 Quitter le club
     @PostMapping("/leave")
     public ResponseEntity<Void> leaveClub() {
         Long userId = getAuthenticatedUserId();
@@ -32,13 +35,11 @@ public class ClubMemberController {
         return ResponseEntity.ok().build();
     }
 
-    // 📋 Liste de tous les membres (ACTIVE en premier, LEFT en dessous)
     @GetMapping
     public ResponseEntity<List<ClubMemberResponseDTO>> allMembers() {
         return ResponseEntity.ok(clubMemberService.getAllMembers());
     }
 
-    // Récupération de l'userId depuis le contexte de sécurité
     private Long getAuthenticatedUserId() {
         User user = (User) SecurityContextHolder.getContext()
                 .getAuthentication()
