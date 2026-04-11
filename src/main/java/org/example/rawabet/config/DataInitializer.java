@@ -28,9 +28,32 @@ public class DataInitializer {
     @Bean
     CommandLineRunner initData() {
         return args -> {
-            // ✅ Si déjà initialisé → skip tout
-            if (roleRepository.count() > 0) {
-                System.out.println("✅ RBAC already initialized — skipping");
+
+            // ✅ Toujours s'assurer que ADMIN_MANAGE existe (même si RBAC déjà initialisé)
+            Permission adminManage = createPermission("ADMIN", "MANAGE");
+
+            // ✅ Toujours s'assurer que le SuperAdmin a ADMIN_MANAGE
+            roleRepository.findByName("SUPER_ADMIN").ifPresent(superAdmin -> {
+                boolean hasAdminManage = superAdmin.getPermissions().stream()
+                        .anyMatch(p -> p.getName().equals("ADMIN_MANAGE"));
+                if (!hasAdminManage) {
+                    superAdmin.getPermissions().add(adminManage);
+                    roleRepository.save(superAdmin);
+                    System.out.println("✅ ADMIN_MANAGE permission added to SUPER_ADMIN");
+                }
+            });
+
+            // ✅ Toujours s'assurer que tous les users ont isActive = true par défaut
+            userRepository.findAll().forEach(user -> {
+                if (!user.isActive()) {
+                    user.setActive(true);
+                    userRepository.save(user);
+                }
+            });
+
+            // ✅ Si déjà initialisé → skip la création des rôles/permissions
+            if (roleRepository.count() > 1) {
+                System.out.println("✅ RBAC already initialized — skipping full init");
                 return;
             }
 
@@ -40,7 +63,6 @@ public class DataInitializer {
             createPermission("CINEMA", "UPDATE");
             createPermission("CINEMA", "DELETE");
 
-            // Ajoute ces lignes après les permissions CINEMA
             createPermission("FILM", "CREATE");
             createPermission("FILM", "READ");
             createPermission("FILM", "UPDATE");
@@ -57,12 +79,8 @@ public class DataInitializer {
             createPermission("CLUB", "DELETE");
             createPermission("CLUB", "MANAGE");
 
-            // 🔥 FIDELITY PERMISSIONS (AJOUT IMPORTANT)
             createPermission("FIDELITY", "READ");
             createPermission("FIDELITY", "UPDATE");
-
-            // 🔥 SYSTEM PERMISSION
-            createPermission("ADMIN", "MANAGE");
 
             // 🎭 ROLES
             Role superAdmin = createRole("SUPER_ADMIN");
@@ -72,17 +90,13 @@ public class DataInitializer {
             Role client = createRole("CLIENT");
 
             // 🔗 ASSIGN PERMISSIONS
-
             adminCinema.setPermissions(permissionRepository.findByModule("CINEMA"));
             adminEvent.setPermissions(permissionRepository.findByModule("EVENT"));
             adminClub.setPermissions(permissionRepository.findByModule("CLUB"));
 
-            // 🔥 CLIENT → uniquement fidélité
             client.setPermissions(permissionRepository.findByModule("FIDELITY"));
 
-            // 🔥 SUPER ADMIN → ALL permissions
             HashSet<Permission> allPermissions = new HashSet<>(permissionRepository.findAll());
-
             superAdmin.setPermissions(new ArrayList<>(allPermissions));
 
             roleRepository.saveAll(List.of(
@@ -133,6 +147,7 @@ public class DataInitializer {
             admin.setEmail("admin@test.com");
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setRoles(List.of(role));
+            admin.setActive(true); // ✅ Fix — SuperAdmin doit être actif
 
             userRepository.save(admin);
 
