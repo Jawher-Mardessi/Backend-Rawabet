@@ -101,6 +101,13 @@ public class SecurityConfig {
                         .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
                         .requestMatchers("/carte/admin/**").hasAuthority("FIDELITY_UPDATE")
 
+                        // 🎬 CINEMA - routes publiques
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/cinemas").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/cinemas/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/films").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/films/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/salles-cinema/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/seats/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

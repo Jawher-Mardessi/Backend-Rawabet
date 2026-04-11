@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.rawabet.cinema.dto.request.CreateFilmRequest;
 import org.example.rawabet.cinema.dto.response.FilmResponse;
 import org.example.rawabet.cinema.entities.Film;
+import org.example.rawabet.cinema.exceptions.ResourceNotFoundException;
 import org.example.rawabet.cinema.mappers.FilmMapper;
 import org.example.rawabet.cinema.repositories.FilmRepository;
 import org.example.rawabet.cinema.services.interfaces.IFilmService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,45 +22,34 @@ public class FilmServiceImpl implements IFilmService {
     private final FilmRepository filmRepository;
 
     @Override
+    @Transactional
     public FilmResponse createFilm(CreateFilmRequest request) {
 
-        if(request.getImdbId() != null &&
-                filmRepository.findByImdbId(request.getImdbId()).isPresent()){
+        if (request.getImdbId() != null &&
+                filmRepository.findByImdbId(request.getImdbId()).isPresent()) {
 
-            throw new RuntimeException("Film already exists");
+            throw new IllegalArgumentException(
+                    "Un film avec l'imdbId '" + request.getImdbId() + "' existe déjà"
+            );
         }
 
-        Film film = new Film();
-
-        film.setTitle(request.getTitle());
-
-        film.setSynopsis(request.getSynopsis());
-
-        film.setDurationMinutes(request.getDurationMinutes());
-
-        film.setLanguage(request.getLanguage());
-
-        film.setGenre(request.getGenre());
-
-        film.setDirector(request.getDirector());
-
-        film.setCastSummary(request.getCastSummary());
-
-        film.setRating(request.getRating());
-
-        film.setReleaseDate(request.getReleaseDate());
-
-        film.setPosterUrl(request.getPosterUrl());
-
-        film.setTrailerUrl(request.getTrailerUrl());
-
-        film.setImdbId(request.getImdbId());
-
-        film.setAverageRating(0f);
-
-        film.setTotalReviews(0);
-
-        film.setIsActive(true);
+        Film film = Film.builder()
+                .title(request.getTitle())
+                .synopsis(request.getSynopsis())
+                .durationMinutes(request.getDurationMinutes())
+                .language(request.getLanguage())
+                .genre(request.getGenre())
+                .director(request.getDirector())
+                .castSummary(request.getCastSummary())
+                .rating(request.getRating())
+                .releaseDate(request.getReleaseDate())
+                .posterUrl(request.getPosterUrl())
+                .trailerUrl(request.getTrailerUrl())
+                .imdbId(request.getImdbId())
+                .averageRating(0f)
+                .totalReviews(0)
+                .isActive(true)
+                .build();
 
         return FilmMapper.toResponse(
                 filmRepository.save(film)
@@ -83,7 +74,7 @@ public class FilmServiceImpl implements IFilmService {
         Film film = filmRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Film not found")
+                        new ResourceNotFoundException("Film introuvable avec l'id : " + id)
                 );
 
         return FilmMapper.toResponse(film);
@@ -91,12 +82,13 @@ public class FilmServiceImpl implements IFilmService {
     }
 
     @Override
+    @Transactional
     public void disableFilm(Long id) {
 
         Film film = filmRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Film not found")
+                        new ResourceNotFoundException("Film introuvable avec l'id : " + id)
                 );
 
         film.setIsActive(false);
