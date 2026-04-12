@@ -3,6 +3,7 @@ package org.example.rawabet.services;
 import org.example.rawabet.dto.ChangePasswordRequest;
 import org.example.rawabet.dto.RegisterRequest;
 import org.example.rawabet.dto.UpdateProfileRequest;
+import org.example.rawabet.dto.UpdateUserRolesRequest;
 import org.example.rawabet.dto.UserResponse;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public interface IUserService {
     UserResponse getMyProfile();
     UserResponse updateMyProfile(UpdateProfileRequest request);
     void changeMyPassword(ChangePasswordRequest request);
+    UserResponse updateUserRoles(Long id, UpdateUserRolesRequest request);
     void banUser(Long id);
     void unbanUser(Long id);
 }

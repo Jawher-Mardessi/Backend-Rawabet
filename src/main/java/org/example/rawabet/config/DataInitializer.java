@@ -43,14 +43,6 @@ public class DataInitializer {
                 }
             });
 
-            // ✅ Toujours s'assurer que tous les users ont isActive = true par défaut
-            userRepository.findAll().forEach(user -> {
-                if (!user.isActive()) {
-                    user.setActive(true);
-                    userRepository.save(user);
-                }
-            });
-
             // ✅ Si déjà initialisé → skip la création des rôles/permissions
             if (roleRepository.count() > 1) {
                 System.out.println("✅ RBAC already initialized — skipping full init");

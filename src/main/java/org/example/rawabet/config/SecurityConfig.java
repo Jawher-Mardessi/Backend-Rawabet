@@ -69,9 +69,11 @@ public class SecurityConfig {
                         .requestMatchers("/users/me/**").authenticated()
 
                         // ── ADMIN SYSTEM ──────────────────────────────────────────────
-                        .requestMatchers("/roles/create").hasAuthority("ADMIN_MANAGE")
-                        .requestMatchers("/roles/delete/**").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/roles/**").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/permissions/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/add-with-role").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/users/update").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/users/*/roles").hasAuthority("ADMIN_MANAGE")
 
                         // ── CINEMA / EVENT ─────────────────────────────────────────────
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")

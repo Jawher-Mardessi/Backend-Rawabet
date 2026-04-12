@@ -116,6 +116,15 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
                 .toList();
     }
 
+    @Override
+    public LoyaltyDashboardResponse getDashboard() {
+        return LoyaltyDashboardResponse.builder()
+                .carte(getMyCarte())
+                .history(getMyHistory())
+                .rewards(getAvailableRewards())
+                .build();
+    }
+
     // =========================
     // 🔥 EXPIRATION
     // =========================
@@ -242,7 +251,15 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
                 .totalSilver(totalSilver)
                 .totalGold(totalGold)
                 .totalVip(totalVip)
-                .totalPointsDistribués(totalPoints)
+                .totalPointsDistribues(totalPoints)
+                .build();
+    }
+
+    @Override
+    public LoyaltyAdminOverviewResponse getAdminOverview() {
+        return LoyaltyAdminOverviewResponse.builder()
+                .stats(getStats())
+                .topClients(getTopClients())
                 .build();
     }
 
@@ -260,6 +277,12 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
                         .level(c.getLevel())
                         .build())
                 .toList();
+    }
+
+    @Override
+    public List<TopClientResponse> getTopClients(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 10));
+        return getTopClients().stream().limit(safeLimit).toList();
     }
 
     // =========================

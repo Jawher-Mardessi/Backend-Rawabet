@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.ChangePasswordRequest;
 import org.example.rawabet.dto.RegisterRequest;
 import org.example.rawabet.dto.UpdateProfileRequest;
+import org.example.rawabet.dto.UpdateUserRolesRequest;
 import org.example.rawabet.dto.UserResponse;
 import org.example.rawabet.entities.CarteFidelite;
+import org.example.rawabet.entities.EmailVerificationToken;
 import org.example.rawabet.entities.Role;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.Level;
@@ -16,8 +18,7 @@ import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.example.rawabet.entities.EmailVerificationToken;
-import org.example.rawabet.repositories.EmailVerificationTokenRepository;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -57,7 +58,7 @@ public class UserServiceImpl implements IUserService {
 
         User savedUser = userRepository.save(user);
         carteRepository.save(createCarte(savedUser));
-       // sendVerificationEmail(savedUser);
+        // sendVerificationEmail(savedUser);
         return mapToResponse(savedUser);
     }
 
@@ -97,7 +98,7 @@ public class UserServiceImpl implements IUserService {
 
         User savedUser = userRepository.save(user);
         carteRepository.save(createCarte(savedUser));
-       // sendVerificationEmail(savedUser);
+        // sendVerificationEmail(savedUser);
         return mapToResponse(savedUser);
     }
 
@@ -201,7 +202,43 @@ public class UserServiceImpl implements IUserService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
+    }
+
+    // =========================
+    // 🔐 UPDATE USER ROLES (ADMIN)
+    // =========================
+    @Override
+    @Transactional
+    public UserResponse updateUserRoles(Long id, UpdateUserRolesRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean targetIsSuperAdmin = user.getRoles().stream()
+                .anyMatch(r -> "SUPER_ADMIN".equals(r.getName()));
+        if (targetIsSuperAdmin) {
+            throw new RuntimeException("Impossible de modifier les roles d'un SUPER_ADMIN");
+        }
+
+        List<String> requestedRoleNames = request.getRoles().stream()
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
+
+        if (requestedRoleNames.contains("SUPER_ADMIN")) {
+            throw new RuntimeException("Cannot assign SUPER_ADMIN role");
+        }
+
+        List<Role> roles = roleRepository.findByNameIn(requestedRoleNames);
+        if (roles.size() != requestedRoleNames.size()) {
+            throw new RuntimeException("Some roles are invalid");
+        }
+
+        user.setRoles(roles);
+        user.setTokenVersion(user.getTokenVersion() + 1);
+        User updated = userRepository.save(user);
+        return mapToResponse(updated);
     }
 
     // =========================
@@ -223,6 +260,7 @@ public class UserServiceImpl implements IUserService {
         }
 
         user.setActive(false);
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
     }
 
@@ -239,6 +277,7 @@ public class UserServiceImpl implements IUserService {
         }
 
         user.setActive(true);
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
     }
 
@@ -266,7 +305,10 @@ public class UserServiceImpl implements IUserService {
     // =========================
     // 🔥 MAPPING
     // =========================
+
     private UserResponse mapToResponse(User user) {
+        CarteFidelite carte = carteRepository.findByUser(user).orElse(null);
+
         return UserResponse.builder()
                 .id(user.getId())
                 .nom(user.getNom())
@@ -275,6 +317,8 @@ public class UserServiceImpl implements IUserService {
                         .map(Role::getName)
                         .toList())
                 .isActive(user.isActive())
+                .loyaltyLevel(carte != null ? carte.getLevel().name() : "SILVER")
+                .loyaltyPoints(carte != null ? carte.getPoints() : 0)
                 .build();
     }
 

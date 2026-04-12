@@ -20,7 +20,7 @@ public class EmailService {
 
     public void sendPasswordResetEmail(String toEmail, String token) {
 
-        String resetLink = frontendUrl + "/reset-password?token=" + token;
+        String resetLink = frontendUrl + "/auth/reset-password?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);

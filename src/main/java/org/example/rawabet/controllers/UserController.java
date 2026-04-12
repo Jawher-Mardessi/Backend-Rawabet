@@ -3,6 +3,7 @@ package org.example.rawabet.controllers;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.RegisterRequest;
+import org.example.rawabet.dto.UpdateUserRolesRequest;
 import org.example.rawabet.dto.UserResponse;
 import org.example.rawabet.services.IUserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,9 +41,20 @@ public class UserController {
     // ✏️ UPDATE USER
     // =========================
     @PutMapping("/update")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public UserResponse updateUser(@Valid @RequestBody RegisterRequest request,
                                    @RequestParam Long id) {
         return userService.updateUser(id, request);
+    }
+
+    // =========================
+    // 🔐 UPDATE USER ROLES (ADMIN)
+    // =========================
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    public UserResponse updateUserRoles(@PathVariable Long id,
+                                        @Valid @RequestBody UpdateUserRolesRequest request) {
+        return userService.updateUserRoles(id, request);
     }
 
     // =========================
