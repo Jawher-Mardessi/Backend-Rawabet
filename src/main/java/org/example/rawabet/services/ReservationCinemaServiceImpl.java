@@ -66,7 +66,7 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
         Seance seance = seanceRepository.findById(request.getSeanceId())
                 .orElseThrow(() -> new RuntimeException("Seance not found"));
 
-        Seat seat = seatRepository.findByNumeroAndSeanceId(request.getSeatNumero(), request.getSeanceId())
+        Seat seat = seatRepository.findBySeatNumberAndSeanceId(request.getSeatNumero(), request.getSeanceId())
                 .orElseThrow(() -> new RuntimeException("Seat not found for numero: " + request.getSeatNumero()));
 
         boolean alreadyReserved = reservationRepository
