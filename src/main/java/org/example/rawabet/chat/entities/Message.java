@@ -28,6 +28,18 @@ public class Message {
 
     private LocalDateTime createdAt;
 
+    // Supprimé pour tous (unsend)
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean deleted = false;
+
+    // Modifié (edit)
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean edited = false;
+
+    private LocalDateTime editedAt;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
