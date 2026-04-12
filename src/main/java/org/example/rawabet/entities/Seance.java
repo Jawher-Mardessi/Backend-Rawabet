@@ -1,4 +1,6 @@
 package org.example.rawabet.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.rawabet.cinema.entities.Film;
@@ -6,6 +8,7 @@ import org.example.rawabet.cinema.entities.Seat;
 import org.example.rawabet.cinema.entities.SalleCinema;
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Entity
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
 public class Seance {
@@ -13,7 +16,7 @@ public class Seance {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private java.time.LocalDateTime dateHeure;
+    private LocalDateTime dateHeure;
     private double prixBase;
     private String langue;
 
@@ -24,8 +27,15 @@ public class Seance {
     private SalleCinema salleCinema;
 
     @OneToMany(mappedBy = "seance")
+    @JsonIgnore
     private List<ReservationCinema> reservations;
 
+<<<<<<< HEAD
+    @OneToMany(mappedBy = "seance")
+    @JsonIgnore
+    private List<Seat> seats;
+}
+=======
     @OneToMany
     @JoinColumn(name = "seance_id")
     private List<org.example.rawabet.cinema.entities.Seat> seats;
@@ -94,3 +104,4 @@ public class Seance {
         this.seats = seats;
     }
 }
+>>>>>>> origin/main

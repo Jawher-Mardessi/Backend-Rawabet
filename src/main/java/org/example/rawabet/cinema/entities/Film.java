@@ -1,22 +1,21 @@
 package org.example.rawabet.cinema.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.*;
+import org.example.rawabet.entities.Feedback;
+import org.example.rawabet.entities.Seance;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "films")
-
 @Getter
 @Setter
 @Builder
-
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Film extends BaseEntity {
 
     @Column(nullable = false)
@@ -55,4 +54,12 @@ public class Film extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    // Relations de ton ancienne version
+    @OneToMany(mappedBy = "film")
+    @JsonIgnore
+    private List<Seance> seances;
+
+    @OneToMany(mappedBy = "film")
+    @JsonIgnore
+    private List<Feedback> feedbacks;
 }

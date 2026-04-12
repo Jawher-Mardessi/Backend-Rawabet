@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class UpdateFeedbackRequest {
     private Long id;
-    private Long userId;
     private Long filmId;
     private String commentaire;
     private int note;
