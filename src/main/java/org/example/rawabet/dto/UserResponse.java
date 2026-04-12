@@ -14,6 +14,8 @@ public class UserResponse {
     private String email;
     private List<String> roles;
     private boolean isActive;
+    private String loyaltyLevel;
+    private Integer loyaltyPoints;
 
     public Long getId() {
         return id;

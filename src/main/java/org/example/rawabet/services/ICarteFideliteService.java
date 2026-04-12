@@ -24,13 +24,20 @@ public interface ICarteFideliteService {
     // 📋 CLIENT — voir son historique
     List<FidelityHistoryResponse> getMyHistory();
 
+    LoyaltyDashboardResponse getDashboard();
+
     RewardResponse redeemReward(RewardType reward);
     List<RewardType> getAvailableRewards();
+
     // 📊 ADMIN — stats globales
     CarteStatsResponse getStats();
 
+    LoyaltyAdminOverviewResponse getAdminOverview();
+
     // 🏆 ADMIN — top 10 clients
     List<TopClientResponse> getTopClients();
+    List<TopClientResponse> getTopClients(int limit);
+
     void transferPoints(Long toUserId, int points);
 
 }

@@ -10,5 +10,5 @@ public class CarteStatsResponse {
     private long totalSilver;
     private long totalGold;
     private long totalVip;
-    private long totalPointsDistribués;
+    private long totalPointsDistribues;
 }

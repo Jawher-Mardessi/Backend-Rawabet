@@ -46,6 +46,12 @@ public class CarteFideliteController {
         return carteService.getMyHistory();
     }
 
+    @GetMapping("/dashboard")
+    @PreAuthorize("hasAuthority('FIDELITY_READ')")
+    public LoyaltyDashboardResponse getDashboard() {
+        return carteService.getDashboard();
+    }
+
     // 🎁 VOIR REWARDS DISPONIBLES
     @GetMapping("/rewards")
     @PreAuthorize("hasAuthority('FIDELITY_READ')")
@@ -67,11 +73,20 @@ public class CarteFideliteController {
         return carteService.getStats();
     }
 
+    @GetMapping("/admin/overview")
+    @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
+    public LoyaltyAdminOverviewResponse getAdminOverview() {
+        return carteService.getAdminOverview();
+    }
+
     // 🏆 TOP 10 (SUPER_ADMIN)
     @GetMapping("/admin/top")
     @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
-    public List<TopClientResponse> getTopClients() {
-        return carteService.getTopClients();
+    public List<TopClientResponse> getTopClients(@RequestParam(required = false) Integer limit) {
+        if (limit == null) {
+            return carteService.getTopClients();
+        }
+        return carteService.getTopClients(limit);
     }
 
     // 💸 TRANSFERT DE POINTS
