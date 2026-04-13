@@ -2,18 +2,23 @@ package org.example.rawabet.chat.websocket;
 
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.chat.dto.*;
+import org.example.rawabet.chat.entities.ChatSession;
+import org.example.rawabet.chat.repositories.ChatSessionRepository;
+import org.example.rawabet.chat.services.impl.RawaBotService;
 import org.example.rawabet.chat.services.interfaces.IMessageService;
 import org.example.rawabet.chat.services.interfaces.IReactionService;
 import org.example.rawabet.entities.User;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
@@ -21,6 +26,9 @@ public class ChatWebSocketController {
 
     private final IMessageService messageService;
     private final IReactionService reactionService;
+    private final RawaBotService rawaBotService;
+    private final ChatSessionRepository chatSessionRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat/{chatSessionId}/send")
     @SendTo("/topic/chat/{chatSessionId}")
@@ -33,7 +41,47 @@ public class ChatWebSocketController {
         SecurityContextHolder.getContext().setAuthentication((Authentication) principal);
         try {
             request.setChatSessionId(chatSessionId);
-            return messageService.sendMessage(request);
+            ChatMessageResponseDTO userMessage = messageService.sendMessage(request);
+
+            // Détecter la mention @rawabot
+            String content = request.getContent().trim();
+            if (content.toLowerCase().startsWith("@rawabot")) {
+                String question = content.substring(10).trim(); // retirer "@rawabot"
+                if (!question.isEmpty()) {
+                    // Appel asynchrone pour ne pas bloquer la réponse utilisateur
+                    new Thread(() -> {
+                        try {
+                            ChatSession session = chatSessionRepository.findById(chatSessionId).orElse(null);
+                            String filmName = session != null
+                                    ? session.getName().split("—")[0].trim()
+                                    : "ce film";
+
+                            String botResponse = rawaBotService.ask(filmName, question);
+
+                            ChatMessageResponseDTO botMessage = ChatMessageResponseDTO.builder()
+                                    .id(-System.currentTimeMillis()) // ID unique négatif pour le bot
+                                    .chatSessionId(chatSessionId)
+                                    .userId(0L)
+                                    .username("🎬 RawaBot")
+                                    .content(botResponse)
+                                    .createdAt(LocalDateTime.now())
+                                    .deleted(false)
+                                    .edited(false)
+                                    .build();
+
+                            // Broadcaster la réponse du bot à tous
+                            messagingTemplate.convertAndSend(
+                                    "/topic/chat/" + chatSessionId,
+                                    botMessage
+                            );
+                        } catch (Exception e) {
+                            System.err.println("[CinephileBot] Erreur thread : " + e.getMessage());
+                        }
+                    }).start();
+                }
+            }
+
+            return userMessage;
         } finally {
             SecurityContextHolder.clearContext();
         }
