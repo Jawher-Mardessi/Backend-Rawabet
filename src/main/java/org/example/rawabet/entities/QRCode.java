@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "qr_codes")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class QRCode {
 
@@ -12,15 +13,25 @@ public class QRCode {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String code; // UUID unique
+    private String code;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_abonnement_id", nullable = false)
     private UserAbonnement userAbonnement;
 
-    private boolean used; // false -> not scanned, true -> already used
+    @Column(nullable = false)
+    private boolean used;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime scannedAt; // When QR was scanned
+    @Column(nullable = true)
+    private LocalDateTime scannedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+    }
 }

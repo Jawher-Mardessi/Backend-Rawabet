@@ -1,5 +1,7 @@
 package org.example.rawabet.services;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.UserSubscriptionResponse;
 import org.example.rawabet.entities.Abonnement;
@@ -95,7 +97,7 @@ public class AbonnementServiceImpl {
     }
 
     @Transactional
-    public String scanQRCode(String qrCodeString) {
+    public ScanQRResponse scanQRCode(String qrCodeString) {
         QRCode qrCode = qrCodeRepository.findByCode(qrCodeString)
                 .orElseThrow(() -> new RuntimeException("QR Code not found"));
 
@@ -115,7 +117,19 @@ public class AbonnementServiceImpl {
         qrCode.setScannedAt(LocalDateTime.now());
         qrCodeRepository.save(qrCode);
 
-        return "Ticket consumed! Remaining: " + userAbonnement.getTicketsRestants();
+        return new ScanQRResponse(
+                "Ticket consumed successfully!",
+                userAbonnement.getTicketsRestants(),
+                userAbonnement.getUser().getNom()
+        );
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ScanQRResponse {
+        private String message;
+        private int ticketsRemaining;
+        private String userName;
     }
 
     public String getQRCodeByUserId(Long userId) {

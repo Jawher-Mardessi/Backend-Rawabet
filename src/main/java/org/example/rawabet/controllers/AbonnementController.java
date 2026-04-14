@@ -1,5 +1,6 @@
 package org.example.rawabet.controllers;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -50,14 +51,32 @@ public class AbonnementController {
 
     @GetMapping("/qr/{userId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> getQRCode(@PathVariable Long userId) {
-        return ResponseEntity.ok(abonnementService.getQRCodeByUserId(userId));
+    public ResponseEntity<?> getQRCode(@PathVariable Long userId) {
+        try {
+            String qrCode = abonnementService.getQRCodeByUserId(userId);
+            return ResponseEntity.ok(new QRResponse(
+                    qrCode,
+                    "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + qrCode
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     @PostMapping("/scan")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<String> scanQRCode(@RequestBody ScanRequest request) {
-        return ResponseEntity.ok(abonnementService.scanQRCode(request.getQrCode()));
+    public ResponseEntity<?> scanQRCode(@RequestBody ScanRequest request) {
+        try {
+            AbonnementServiceImpl.ScanQRResponse response = abonnementService.scanQRCode(request.getQrCode());
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(new ErrorResponse("Server error: " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/users/expired")
@@ -66,9 +85,22 @@ public class AbonnementController {
     }
 
     @Getter
+    @AllArgsConstructor
+    public static class QRResponse {
+        private String qrCode;
+        private String imageUrl;
+    }
+
+    @Getter
     @Setter
     @NoArgsConstructor
     public static class ScanRequest {
         private String qrCode;
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class ErrorResponse {
+        private String error;
     }
 }
