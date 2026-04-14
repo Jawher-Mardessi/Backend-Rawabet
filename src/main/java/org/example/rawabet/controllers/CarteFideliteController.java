@@ -26,6 +26,14 @@ public class CarteFideliteController {
         return carteService.getMyCarte();
     }
 
+    @GetMapping("/admin/{userId}")
+    @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
+    public CarteFideliteResponse getCarteByUserId(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return carteService.getCarteByUser(user);
+    }
+
     @PostMapping("/admin/add-points/{userId}")
     @PreAuthorize("hasAuthority('FIDELITY_UPDATE')")
     public CarteFideliteResponse addPointsByAdmin(

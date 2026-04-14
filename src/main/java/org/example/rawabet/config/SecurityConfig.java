@@ -72,6 +72,11 @@ public class SecurityConfig {
                         .requestMatchers("/roles/create").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/roles/delete/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/add-with-role").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers(HttpMethod.GET, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+
 
                         // ── CINEMA / EVENT ─────────────────────────────────────────────
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")

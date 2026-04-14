@@ -45,8 +45,7 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
     // =========================
     @Override
     public CarteFideliteResponse getCarteByUser(User user) {
-        CarteFidelite carte = carteRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Carte not found"));
+        CarteFidelite carte = findOrCreateCarte(user);
         return mapToResponse(carte);
     }
 
@@ -64,8 +63,7 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
             throw new RuntimeException("Suspicious points value");
         }
 
-        CarteFidelite carte = carteRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Carte not found"));
+        CarteFidelite carte = findOrCreateCarte(user);
 
         handleExpiration(carte);
 
@@ -91,8 +89,7 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
             throw new RuntimeException("Max 1000 points par opération admin");
         }
 
-        CarteFidelite carte = carteRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Carte not found"));
+        CarteFidelite carte = findOrCreateCarte(user);
 
         handleExpiration(carte);
 
@@ -126,6 +123,18 @@ public class CarteFideliteServiceImpl implements ICarteFideliteService {
             carte.setLevel(Level.SILVER);
             carteRepository.save(carte);
         }
+    }
+
+    private CarteFidelite findOrCreateCarte(User user) {
+        return carteRepository.findByUser(user)
+                .orElseGet(() -> carteRepository.save(
+                        CarteFidelite.builder()
+                                .user(user)
+                                .points(0)
+                                .dateExpiration(LocalDate.now().plusYears(1))
+                                .level(Level.SILVER)
+                                .build()
+                ));
     }
 
     // =========================

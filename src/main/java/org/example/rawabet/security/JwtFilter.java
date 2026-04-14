@@ -8,11 +8,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -61,8 +63,11 @@ public class JwtFilter extends OncePerRequestFilter {
                                     user,
                                     null,
                                     user.getRoles().stream()
-                                            .flatMap(role -> role.getPermissions().stream())
-                                            .map(permission -> new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()))
+                                            .flatMap(role -> Stream.concat(
+                                                    Stream.of(new SimpleGrantedAuthority(role.getName())),
+                                                    role.getPermissions().stream()
+                                                            .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                            ))
                                             .toList()
                             );
                     SecurityContextHolder.getContext().setAuthentication(auth);

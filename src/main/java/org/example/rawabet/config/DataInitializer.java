@@ -7,6 +7,7 @@ import org.example.rawabet.entities.User;
 import org.example.rawabet.repositories.PermissionRepository;
 import org.example.rawabet.repositories.RoleRepository;
 import org.example.rawabet.repositories.UserRepository;
+import org.example.rawabet.services.AbonnementServiceImpl;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,10 +25,12 @@ public class DataInitializer {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final AbonnementServiceImpl abonnementService;
 
     @Bean
     CommandLineRunner initData() {
         return args -> {
+            abonnementService.initAbonnements();
             // ✅ Si déjà initialisé → skip tout
             if (roleRepository.count() > 0) {
                 System.out.println("✅ RBAC already initialized — skipping");

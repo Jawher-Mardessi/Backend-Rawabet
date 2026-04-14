@@ -52,7 +52,7 @@ public class User {
     private CarteFidelite carteFidelite;
 
     @OneToOne(mappedBy = "user")
-    private Abonnement abonnement;
+    private UserAbonnement abonnement;
 
     public Long getId() {
         return id;
@@ -134,11 +134,11 @@ public class User {
         this.carteFidelite = carteFidelite;
     }
 
-    public Abonnement getAbonnement() {
+    public UserAbonnement getAbonnement() {
         return abonnement;
     }
 
-    public void setAbonnement(Abonnement abonnement) {
+    public void setAbonnement(UserAbonnement abonnement) {
         this.abonnement = abonnement;
     }
 }
