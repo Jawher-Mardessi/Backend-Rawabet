@@ -13,7 +13,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
+@Table(
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_club_member_user_club",
+                        columnNames = {"user_id", "club_id"}
+                )
+        }
+)
 public class ClubMember {
 
     @Id
@@ -21,7 +28,7 @@ public class ClubMember {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(nullable = false, unique = true)
+    @JoinColumn(nullable = false)
     private User user;
 
     @ManyToOne
@@ -33,4 +40,9 @@ public class ClubMember {
 
     private LocalDateTime joinedAt;
 
+    // ✅ AJOUTÉS — pour la fonctionnalité Remove by admin
+    @Column(length = 500)
+    private String removeReason;   // optionnel — raison de l'expulsion
+
+    private LocalDateTime removedAt; // date de l'expulsion
 }
