@@ -19,6 +19,8 @@ public class ClubParticipationResponseDTO {
 
     private int reservedPlaces;
 
+    private int remainingPlaces;
+
     private ClubParticipationStatus status;
 
     private LocalDateTime reservationDate;
