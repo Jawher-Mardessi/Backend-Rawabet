@@ -5,6 +5,7 @@ import org.example.rawabet.chat.dto.*;
 import org.example.rawabet.chat.entities.ChatSession;
 import org.example.rawabet.chat.repositories.ChatSessionRepository;
 import org.example.rawabet.chat.services.impl.RawaBotService;
+import org.example.rawabet.chat.services.impl.SpoilerDetectionServiceImpl;
 import org.example.rawabet.chat.services.interfaces.IMessageService;
 import org.example.rawabet.chat.services.interfaces.IReactionService;
 import org.example.rawabet.entities.User;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class ChatWebSocketController {
     private final IMessageService messageService;
     private final IReactionService reactionService;
     private final RawaBotService rawaBotService;
+    private final SpoilerDetectionServiceImpl spoilerDetectionService;
     private final ChatSessionRepository chatSessionRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -42,13 +45,28 @@ public class ChatWebSocketController {
         try {
             request.setChatSessionId(chatSessionId);
             ChatMessageResponseDTO userMessage = messageService.sendMessage(request);
+            String content = request.getContent().trim();
+            Long messageId = userMessage.getId();
+
+            // ✅ Détection spoiler ASYNCHRONE — ne bloque pas le chat
+            new Thread(() -> {
+                try {
+                    boolean spoiler = spoilerDetectionService.isSpoiler(content, messageId);
+                    if (spoiler) {
+                        messagingTemplate.convertAndSend(
+                                "/topic/chat/" + chatSessionId + "/spoiler",
+                                Map.of("messageId", messageId, "isSpoiler", true)
+                        );
+                    }
+                } catch (Exception e) {
+                    System.err.println("[Spoiler] Erreur : " + e.getMessage());
+                }
+            }).start();
 
             // Détecter la mention @rawabot
-            String content = request.getContent().trim();
             if (content.toLowerCase().startsWith("@rawabot")) {
-                String question = content.substring(10).trim(); // retirer "@rawabot"
+                String question = content.substring(10).trim();
                 if (!question.isEmpty()) {
-                    // Appel asynchrone pour ne pas bloquer la réponse utilisateur
                     new Thread(() -> {
                         try {
                             ChatSession session = chatSessionRepository.findById(chatSessionId).orElse(null);
@@ -59,7 +77,7 @@ public class ChatWebSocketController {
                             String botResponse = rawaBotService.ask(filmName, question);
 
                             ChatMessageResponseDTO botMessage = ChatMessageResponseDTO.builder()
-                                    .id(-System.currentTimeMillis()) // ID unique négatif pour le bot
+                                    .id(-System.currentTimeMillis())
                                     .chatSessionId(chatSessionId)
                                     .userId(0L)
                                     .username("🎬 RawaBot")
@@ -67,9 +85,9 @@ public class ChatWebSocketController {
                                     .createdAt(LocalDateTime.now())
                                     .deleted(false)
                                     .edited(false)
+                                    .spoiler(false)
                                     .build();
 
-                            // Broadcaster la réponse du bot à tous
                             messagingTemplate.convertAndSend(
                                     "/topic/chat/" + chatSessionId,
                                     botMessage

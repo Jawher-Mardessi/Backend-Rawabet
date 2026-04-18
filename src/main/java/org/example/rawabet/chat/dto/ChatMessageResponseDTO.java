@@ -21,4 +21,5 @@ public class ChatMessageResponseDTO {
     private boolean deleted;
     private boolean edited;
     private LocalDateTime editedAt;
+    private boolean spoiler;
 }
