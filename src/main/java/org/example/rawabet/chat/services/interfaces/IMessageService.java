@@ -17,4 +17,7 @@ public interface IMessageService {
 
     // Edit : modifie le contenu, broadcast le message mis à jour
     ChatMessageResponseDTO editMessage(EditRequestDTO request, Long userId);
+
+    // Admin : soft delete d'un message (deleted = true), visible par personne
+    void adminDeleteMessage(Long messageId);
 }
