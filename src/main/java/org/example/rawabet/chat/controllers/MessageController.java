@@ -33,4 +33,15 @@ public class MessageController {
         size = Math.min(size, 50);
         return ResponseEntity.ok(messageService.getMessagesPaged(chatSessionId, page, size));
     }
+
+    /**
+     * Modération admin — soft delete d'un message (deleted = true).
+     * Le message reste en base mais n'est plus visible côté utilisateur.
+     * DELETE /chat/messages/{messageId}/admin
+     */
+    @DeleteMapping("/{messageId}/admin")
+    public ResponseEntity<Void> adminDeleteMessage(@PathVariable Long messageId) {
+        messageService.adminDeleteMessage(messageId);
+        return ResponseEntity.noContent().build();
+    }
 }

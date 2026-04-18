@@ -161,19 +161,31 @@ public class MessageServiceImpl implements IMessageService {
         return toDTO(message, user);
     }
 
+    @Override
+    @Transactional
+    public void adminDeleteMessage(Long messageId) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message introuvable : " + messageId));
+        message.setDeleted(true);
+        messageRepository.save(message);
+    }
+
     private ChatMessageResponseDTO toDTO(Message message, User user) {
+        // ✅ BUG 2 CORRIGÉ : userId 0 = RawaBot, pas besoin de chercher en base
+        boolean isBot = message.getUserId() != null && message.getUserId() == 0L;
+
         return ChatMessageResponseDTO.builder()
                 .id(message.getId())
                 .chatSessionId(message.getChatSessionId())
                 .userId(message.getUserId())
-                .username(user != null ? user.getNom() : "Utilisateur inconnu")
-                .userEmail(user != null ? user.getEmail() : null)
+                .username(isBot ? "🎬 RawaBot" : (user != null ? user.getNom() : "Utilisateur inconnu"))
+                .userEmail(isBot ? null : (user != null ? user.getEmail() : null))
                 .content(message.isDeleted() ? "" : message.getContent())
                 .createdAt(message.getCreatedAt())
                 .deleted(message.isDeleted())
                 .edited(message.isEdited())
                 .editedAt(message.getEditedAt())
-                .spoiler(message.isSpoiler()) // ✅ ajouté
+                .spoiler(message.isSpoiler())
                 .build();
     }
 }
