@@ -106,11 +106,15 @@ public class NotificationService {
     }
 
     public Notification createNotifEmail(User user, String message) {
+        return createNotifEmail(user, "Nouvelle notification", message);
+    }
+
+    public Notification createNotifEmail(User user, String subject, String message) {
         Notification notification = buildNotification(user, message, NotificationType.EMAIL);
         Notification savedNotification = notificationRepository.save(notification);
 
         try {
-            sendEmail(user.getEmail(), message);
+            sendEmail(user.getEmail(), subject, message);
         } catch (MailException | IllegalArgumentException e) {
             logger.error("Echec d'envoi de l'email pour l'utilisateur {}: {}", user.getId(), e.getMessage());
         }
@@ -159,6 +163,10 @@ public class NotificationService {
     }
 
     public void sendEmail(String email, String message) {
+        sendEmail(email, "Nouvelle notification", message);
+    }
+
+    public void sendEmail(String email, String subject, String message) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("L'adresse email est invalide");
         }
@@ -168,7 +176,7 @@ public class NotificationService {
             mailMessage.setFrom(mailFrom);
         }
         mailMessage.setTo(email);
-        mailMessage.setSubject("Nouvelle notification");
+        mailMessage.setSubject(subject);
         mailMessage.setText(message);
         mailSender.send(mailMessage);
     }

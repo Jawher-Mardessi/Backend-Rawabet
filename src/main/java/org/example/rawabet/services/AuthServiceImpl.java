@@ -4,19 +4,22 @@ import lombok.RequiredArgsConstructor;
 import org.example.rawabet.dto.AuthResponse;
 import org.example.rawabet.dto.LoginRequest;
 import org.example.rawabet.entities.EmailVerificationToken;
+import org.example.rawabet.entities.PasswordResetToken;
 import org.example.rawabet.entities.User;
+import org.example.rawabet.repositories.EmailVerificationTokenRepository;
+import org.example.rawabet.repositories.PasswordResetTokenRepository;
 import org.example.rawabet.repositories.UserRepository;
 import org.example.rawabet.security.JwtService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.example.rawabet.entities.PasswordResetToken;
-import org.example.rawabet.repositories.PasswordResetTokenRepository;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import org.example.rawabet.entities.EmailVerificationToken;
-import org.example.rawabet.repositories.EmailVerificationTokenRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -87,11 +90,12 @@ public class AuthServiceImpl implements IAuthService {
         resetTokenRepository.deleteByUser(user);
 
         // ✅ générer token unique
-        String token = UUID.randomUUID().toString();
+        String rawToken = UUID.randomUUID().toString();
+        String tokenHash = hashToken(rawToken);
 
-        // ✅ sauvegarder token
+        // ✅ sauvegarder uniquement le hash du token
         PasswordResetToken resetToken = new PasswordResetToken();
-        resetToken.setToken(token);
+        resetToken.setToken(tokenHash);
         resetToken.setUser(user);
         resetToken.setExpiresAt(LocalDateTime.now().plusMinutes(15));
         resetToken.setUsed(false);
@@ -99,7 +103,7 @@ public class AuthServiceImpl implements IAuthService {
         resetTokenRepository.save(resetToken);
 
         // ✅ envoyer email
-        emailService.sendPasswordResetEmail(email, token);
+        emailService.sendPasswordResetEmail(email, rawToken);
     }
 
     // =========================
@@ -108,7 +112,9 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public void resetPassword(String token, String newPassword) {
 
-        PasswordResetToken resetToken = resetTokenRepository.findByToken(token)
+        String tokenHash = hashToken(token);
+
+        PasswordResetToken resetToken = resetTokenRepository.findByToken(tokenHash)
                 .orElseThrow(() -> new RuntimeException("Token invalide"));
 
         // ✅ vérifier expiration
@@ -124,6 +130,7 @@ public class AuthServiceImpl implements IAuthService {
         // ✅ changer mot de passe
         User user = resetToken.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
 
         // ✅ marquer token comme utilisé
@@ -152,5 +159,19 @@ public class AuthServiceImpl implements IAuthService {
 
         // ✅ supprimer le token
         verificationTokenRepository.delete(verificationToken);
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashed) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Hash algorithm unavailable", e);
+        }
     }
 }

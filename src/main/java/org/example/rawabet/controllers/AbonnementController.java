@@ -49,6 +49,12 @@ public class AbonnementController {
         return abonnementService.getSubscriptionByUserId(userId);
     }
 
+    @GetMapping("/users/{userId}/available")
+    @PreAuthorize("isAuthenticated()")
+    public UserSubscriptionResponse getSubscriptionWithRemainingTickets(@PathVariable Long userId) {
+        return abonnementService.getSubscriptionWithRemainingTickets(userId);
+    }
+
     @GetMapping("/qr/{userId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getQRCode(@PathVariable Long userId) {

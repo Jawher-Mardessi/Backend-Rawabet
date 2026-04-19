@@ -15,6 +15,8 @@ public class Notification {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Lob
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
     private java.time.LocalDateTime dateEnvoi;
 

@@ -20,6 +20,9 @@ public class User {
     @JsonIgnore
     private String password;
 
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isActive = true;
 
