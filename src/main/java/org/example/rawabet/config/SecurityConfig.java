@@ -103,6 +103,18 @@ public class SecurityConfig {
                         .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
                         .requestMatchers("/carte/admin/**").hasAuthority("FIDELITY_UPDATE")
 
+                        // ── ABONNEMENTS ────────────────────────────────────────────────
+                        // Plan catalogue is public
+                        .requestMatchers(HttpMethod.GET, "/abonnements").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/abonnements/{id}").permitAll()
+                        // Admin plan management
+                        .requestMatchers(HttpMethod.POST, "/abonnements").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers(HttpMethod.PUT, "/abonnements/**").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers(HttpMethod.DELETE, "/abonnements/**").hasAuthority("ADMIN_MANAGE")
+                        // User subscription operations (authenticated)
+                        .requestMatchers("/abonnements/users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/abonnements/scan").authenticated()
+
                         // 🎬 CINEMA - routes publiques
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/cinemas").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/cinemas/**").permitAll()
