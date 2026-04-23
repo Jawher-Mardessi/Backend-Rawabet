@@ -21,40 +21,66 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", e.getMessage()));
     }
 
-    // AJOUT 1 — filet race condition email (contrainte UNIQUE DB)
-    // Intercepte le DataIntegrityViolationException lancé dans UserServiceImpl
-    // quand deux inscriptions simultanées passent checkEmail() en même temps.
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException e) {
-        String msg = e.getMostSpecificCause().getMessage();
-        if (msg != null && msg.toLowerCase().contains("email")) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(Map.of("error", "Email already exists"));
-        }
+    String msg = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : null;
+    if (msg != null && msg.toLowerCase().contains("email")) {
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "Violation de contrainte d'intégrité"));
+            .status(HttpStatus.CONFLICT)
+            .body(Map.of("error", "Email already exists"));
+    }
+    return ResponseEntity
+        .status(HttpStatus.CONFLICT)
+        .body(Map.of("error", "Data integrity constraint violation"));
     }
 
-    // AJOUT 2 — erreurs @Valid : retourne tous les champs invalides d'un coup
-    // au lieu d'une erreur 500 générique
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException e) {
-        Map<String, String> fieldErrors = e.getBindingResult()
+    @ExceptionHandler(org.example.rawabet.cinema.exceptions.ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCinemaNotFound(
+            org.example.rawabet.cinema.exceptions.ResourceNotFoundException ex) {
+
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("status", 404);
+        body.put("error", "Not Found");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(body);
+
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("status", 409);
+        body.put("error", "Conflict");
+        body.put("message", ex.getMessage());
+
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(body);
+
+    }
+
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .collect(Collectors.toMap(
-                        fe -> fe.getField(),
-                        fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Valeur invalide",
-                        (a, b) -> a
-                ));
+            .collect(Collectors.toMap(
+                fe -> fe.getField(),
+                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value",
+                (a, b) -> a
+            ));
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(
-                        "error", "Données invalides",
-                        "fields", fieldErrors
-                ));
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("status", 400);
+        body.put("error", "Bad Request");
+        body.put("message", "Validation error");
+        body.put("fields", fieldErrors);
+
+        return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body(body);
     }
 }

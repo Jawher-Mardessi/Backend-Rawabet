@@ -85,6 +85,7 @@ public class User {
     private CarteFidelite carteFidelite;
 
     @OneToOne(mappedBy = "user")
+    @JsonIgnore
     private Abonnement abonnement;
 
     // ── Helpers métier ─────────────────────────────────────────────────

@@ -9,6 +9,8 @@ public interface IClubParticipationService {
 
     ClubParticipationResponseDTO reserve(ClubParticipationRequestDTO request);
 
+    ClubParticipationResponseDTO updateReservation(Long participationId, int places);
+
     void cancel(Long participationId);
 
     List<ClubParticipationResponseDTO> myReservations();

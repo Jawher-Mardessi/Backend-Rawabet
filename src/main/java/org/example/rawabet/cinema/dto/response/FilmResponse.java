@@ -34,4 +34,6 @@ public class FilmResponse {
 
     private Integer totalReviews;
 
+    private String trailerUrl;
+
 }

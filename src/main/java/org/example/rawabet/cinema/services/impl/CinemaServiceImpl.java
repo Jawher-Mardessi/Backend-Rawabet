@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.rawabet.cinema.dto.request.CreateCinemaRequest;
 import org.example.rawabet.cinema.dto.response.CinemaResponse;
 import org.example.rawabet.cinema.entities.Cinema;
+import org.example.rawabet.cinema.exceptions.ResourceNotFoundException;
 import org.example.rawabet.cinema.mappers.CinemaMapper;
 import org.example.rawabet.cinema.repositories.CinemaRepository;
 import org.example.rawabet.cinema.services.interfaces.ICinemaService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -20,31 +22,33 @@ public class CinemaServiceImpl implements ICinemaService {
     private final CinemaRepository cinemaRepository;
 
     @Override
+    @Transactional
     public CinemaResponse createCinema(CreateCinemaRequest request) {
 
-        Cinema cinema = new Cinema();
+        String slug = request.getName()
+                .toLowerCase()
+                .trim()
+                .replaceAll("\\s+", "-")
+                .replaceAll("[^a-z0-9\\-]", "");
 
-        cinema.setName(request.getName());
+        // Vérification unicité du slug avant save
+        if (cinemaRepository.findBySlug(slug).isPresent()) {
+            throw new IllegalArgumentException(
+                    "Un cinéma avec le slug '" + slug + "' existe déjà"
+            );
+        }
 
-        cinema.setAddress(request.getAddress());
-
-        cinema.setCity(request.getCity());
-
-        cinema.setCountry(request.getCountry());
-
-        cinema.setPhone(request.getPhone());
-
-        cinema.setEmail(request.getEmail());
-
-        cinema.setOpeningHours(request.getOpeningHours());
-
-        cinema.setSlug(
-                request.getName()
-                        .toLowerCase()
-                        .replace(" ","-")
-        );
-
-        cinema.setIsActive(true);
+        Cinema cinema = Cinema.builder()
+                .name(request.getName())
+                .slug(slug)
+                .address(request.getAddress())
+                .city(request.getCity())
+                .country(request.getCountry())
+                .phone(request.getPhone())
+                .email(request.getEmail())
+                .openingHours(request.getOpeningHours())
+                .isActive(true)
+                .build();
 
         return CinemaMapper.toResponse(
                 cinemaRepository.save(cinema)
@@ -69,7 +73,7 @@ public class CinemaServiceImpl implements ICinemaService {
         Cinema cinema = cinemaRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cinema not found")
+                        new ResourceNotFoundException("Cinéma introuvable avec l'id : " + id)
                 );
 
         return CinemaMapper.toResponse(cinema);
@@ -77,12 +81,13 @@ public class CinemaServiceImpl implements ICinemaService {
     }
 
     @Override
+    @Transactional
     public void disableCinema(Long id) {
 
         Cinema cinema = cinemaRepository
                 .findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException("Cinema not found")
+                        new ResourceNotFoundException("Cinéma introuvable avec l'id : " + id)
                 );
 
         cinema.setIsActive(false);

@@ -28,6 +28,20 @@ public class Message {
 
     private LocalDateTime createdAt;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean deleted = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean edited = false;
+
+    private LocalDateTime editedAt;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean spoiler = false;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();

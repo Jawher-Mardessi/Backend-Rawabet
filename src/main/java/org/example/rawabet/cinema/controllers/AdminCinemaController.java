@@ -1,6 +1,6 @@
 package org.example.rawabet.cinema.controllers;
 
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.example.rawabet.cinema.dto.request.CreateCinemaRequest;
@@ -21,7 +21,7 @@ public class AdminCinemaController {
     @PostMapping
     @PreAuthorize("hasAuthority('CINEMA_CREATE')")
     public CinemaResponse createCinema(
-            @RequestBody CreateCinemaRequest request){
+            @Valid @RequestBody CreateCinemaRequest request){
 
         return cinemaService.createCinema(request);
 

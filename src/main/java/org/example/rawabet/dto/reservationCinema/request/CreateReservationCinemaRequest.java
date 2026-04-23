@@ -6,5 +6,5 @@ import lombok.Data;
 public class CreateReservationCinemaRequest {
     private Long userId;
     private Long seanceId;
-    private Long seatId;
+    private Integer seatNumero;
 }
