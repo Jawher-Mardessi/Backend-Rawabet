@@ -1,51 +1,37 @@
 package org.example.rawabet.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @Builder
 public class UserResponse {
 
-    private Long id;
+    private Long   id;
     private String nom;
     private String email;
+    private String avatarUrl;
     private List<String> roles;
     private boolean isActive;
     private String loyaltyLevel;
     private Integer loyaltyPoints;
 
-    public Long getId() {
-        return id;
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime createdAt;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    // ── Ban temporaire ─────────────────────────────────────────────────────
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime banUntil;
 
-    public String getNom() {
-        return nom;
-    }
+    private String banReason;
 
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
+    // ── Sécurité ───────────────────────────────────────────────────────────
+    private int loginFailedAttempts;
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public List<String> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime loginLockedUntil;
 }

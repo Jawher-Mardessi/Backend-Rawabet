@@ -48,58 +48,87 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
 
-                        // ── PUBLIC ─────────────────────────────────────────────────
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/users/add").permitAll()
+                        // ── PUBLIC ────────────────────────────────────────────────
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/logout").permitAll()
+                        .requestMatchers("/auth/forgot-password").permitAll()
+                        .requestMatchers("/auth/reset-password/**").permitAll()
+                        .requestMatchers("/auth/verify-email").permitAll()
+                        .requestMatchers("/auth/test").permitAll()
 
-                        // WebSocket — handshake HTTP permis, auth ensuite via intercepteur STOMP
+                        .requestMatchers("/ml/**").authenticated()
+
+                        // Alerte tentative suspecte — public (appelé avant auth réussie)
+                        .requestMatchers("/auth/suspect-alert").permitAll()
+                        .requestMatchers("/auth/face/login").permitAll()
+                        .requestMatchers("/auth/face/register").permitAll()
+
+                        // ── WEBAUTHN / PASSKEY — public ────────────────────────────
+                        // authentication/start et finish : appelés AVANT connexion → public
+                        // registration/start et finish : nécessitent d'être connecté → authenticated
+                        .requestMatchers("/auth/webauthn/authentication/start").permitAll()
+                        .requestMatchers("/auth/webauthn/authentication/finish").permitAll()
+                        .requestMatchers("/auth/webauthn/registration/start").authenticated()
+                        .requestMatchers("/auth/webauthn/registration/finish").authenticated()
+
+                        .requestMatchers("/users/add").permitAll()
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+
+                        // WebSocket
                         .requestMatchers("/ws/**").permitAll()
 
-                        // ── CHAT ────────────────────────────────────────────────────
+                        // ── IMPERSONATION — authentifié + rôle admin ───────────────
+                        // La vérification du rôle est faite par @PreAuthorize dans le controller
+                        .requestMatchers("/auth/impersonate").authenticated()
+
+                        // ── CHAT ──────────────────────────────────────────────────
                         .requestMatchers(HttpMethod.GET, "/chat/messages/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/chat/join/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/chat/active/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/chat/session/seance/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/chat/session/**").hasAuthority("CINEMA_CREATE")
-                        .requestMatchers(HttpMethod.PUT, "/chat/session/**").hasAuthority("CINEMA_CREATE")
-                        .requestMatchers(HttpMethod.GET, "/chat/sessions").hasAuthority("CINEMA_CREATE")
+                        .requestMatchers(HttpMethod.PUT,  "/chat/session/**").hasAuthority("CINEMA_CREATE")
+                        .requestMatchers(HttpMethod.GET,  "/chat/sessions").hasAuthority("CINEMA_CREATE")
 
-                        // ── USERS ────────────────────────────────────────────────────
+                        // ── USERS ─────────────────────────────────────────────────
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/**").authenticated()
 
-                        // ── ADMIN SYSTEM ──────────────────────────────────────────────
+                        // ── ADMIN SYSTEM ──────────────────────────────────────────
                         .requestMatchers("/roles/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/permissions/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/add-with-role").hasAuthority("ADMIN_MANAGE")
-                        .requestMatchers("/users/update").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/users/update/**").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/*/roles").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/users/*/ban").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/users/*/unban").hasAuthority("ADMIN_MANAGE")
 
-                        // ── CINEMA / EVENT ─────────────────────────────────────────────
+                        // ── CINEMA / EVENT ────────────────────────────────────────
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")
                         .requestMatchers("/event/**").hasAuthority("EVENT_CREATE")
 
-                        // ── CLUB — public ──────────────────────────────────────────────
+                        // ── CLUB — public ─────────────────────────────────────────
                         .requestMatchers(HttpMethod.GET, "/club").permitAll()
                         .requestMatchers(HttpMethod.GET, "/club/events").permitAll()
                         .requestMatchers(HttpMethod.GET, "/club/events/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/club/members").permitAll()
 
-                        // ── CLUB — membres authentifiés ────────────────────────────────
-                        .requestMatchers(HttpMethod.GET, "/club/members/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/club/members/leave").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/club/requests").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/club/reservations").authenticated()
+                        // ── CLUB — membres authentifiés ───────────────────────────
+                        .requestMatchers(HttpMethod.GET,    "/club/members/me").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/club/members/leave").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/club/requests").authenticated()
+                        .requestMatchers(HttpMethod.POST,   "/club/reservations").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/club/reservations/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/club/reservations/my").authenticated()
+                        .requestMatchers(HttpMethod.GET,    "/club/reservations/my").authenticated()
 
-                        // ── CLUB — admin ───────────────────────────────────────────────
+                        // ── CLUB — admin ──────────────────────────────────────────
                         .requestMatchers(HttpMethod.PUT, "/club").hasAuthority("CLUB_MANAGE")
                         .requestMatchers(HttpMethod.GET, "/club/requests/pending").hasAuthority("CLUB_MANAGE")
                         .requestMatchers(HttpMethod.PUT, "/club/requests/**").hasAuthority("CLUB_MANAGE")
                         .requestMatchers(HttpMethod.POST, "/club/events").hasAuthority("CLUB_CREATE")
 
-                        // ── FIDÉLITÉ ───────────────────────────────────────────────────
+                        // ── FIDÉLITÉ ──────────────────────────────────────────────
                         .requestMatchers("/carte/me").hasAuthority("FIDELITY_READ")
                         .requestMatchers("/carte/admin/**").hasAuthority("FIDELITY_UPDATE")
 
@@ -110,3 +139,4 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
