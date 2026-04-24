@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.chat.repositories.MessageRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -15,9 +14,6 @@ import java.net.http.HttpResponse;
 @Service
 @RequiredArgsConstructor
 public class SpoilerDetectionServiceImpl {
-
-    @Value("${anthropic.api.key}")
-    private String apiKey;
 
     private final MessageRepository messageRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
