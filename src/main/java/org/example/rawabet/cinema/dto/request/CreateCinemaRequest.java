@@ -26,4 +26,9 @@ public class CreateCinemaRequest {
 
     private String openingHours;
 
+    // ── Géolocalisation ────────────────────────────
+    private Double latitude;
+    private Double longitude;
+    private String timezone;
+
 }

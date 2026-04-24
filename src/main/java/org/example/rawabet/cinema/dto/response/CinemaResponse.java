@@ -26,4 +26,9 @@ public class CinemaResponse {
 
     private Boolean isActive;
 
+    // ── Géolocalisation ────────────────────────────
+    private Double latitude;
+    private Double longitude;
+    private String timezone;
+
 }

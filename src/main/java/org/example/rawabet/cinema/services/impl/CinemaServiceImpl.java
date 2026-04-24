@@ -16,7 +16,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-
 public class CinemaServiceImpl implements ICinemaService {
 
     private final CinemaRepository cinemaRepository;
@@ -31,7 +30,6 @@ public class CinemaServiceImpl implements ICinemaService {
                 .replaceAll("\\s+", "-")
                 .replaceAll("[^a-z0-9\\-]", "");
 
-        // Vérification unicité du slug avant save
         if (cinemaRepository.findBySlug(slug).isPresent()) {
             throw new IllegalArgumentException(
                     "Un cinéma avec le slug '" + slug + "' existe déjà"
@@ -47,53 +45,46 @@ public class CinemaServiceImpl implements ICinemaService {
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .openingHours(request.getOpeningHours())
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
+                .timezone(request.getTimezone())
                 .isActive(true)
                 .build();
 
         return CinemaMapper.toResponse(
                 cinemaRepository.save(cinema)
         );
-
     }
 
     @Override
     public List<CinemaResponse> getActiveCinemas() {
-
         return cinemaRepository
                 .findByIsActiveTrue()
                 .stream()
                 .map(CinemaMapper::toResponse)
                 .toList();
-
     }
 
     @Override
     public CinemaResponse getCinemaById(Long id) {
-
         Cinema cinema = cinemaRepository
                 .findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Cinéma introuvable avec l'id : " + id)
                 );
-
         return CinemaMapper.toResponse(cinema);
-
     }
 
     @Override
     @Transactional
     public void disableCinema(Long id) {
-
         Cinema cinema = cinemaRepository
                 .findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Cinéma introuvable avec l'id : " + id)
                 );
-
         cinema.setIsActive(false);
-
         cinemaRepository.save(cinema);
-
     }
 
 }
