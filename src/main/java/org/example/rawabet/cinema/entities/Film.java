@@ -55,4 +55,10 @@ public class Film extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    // ── Prédiction ROI ───────────────────────────────────────────
+    private Boolean profitable;
+
+    private Double roiConfidence;
+
+    private String roiLabel;
 }
