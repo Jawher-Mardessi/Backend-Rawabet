@@ -1,11 +1,14 @@
 package org.example.rawabet.config;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -15,6 +18,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", e.getMessage()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException e) {
+        String msg = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : null;
+        if (msg != null && msg.toLowerCase().contains("email")) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Email already exists"));
+        }
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Data integrity constraint violation"));
     }
 
     @ExceptionHandler(org.example.rawabet.cinema.exceptions.ResourceNotFoundException.class)
@@ -28,7 +44,6 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(body);
-
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -41,27 +56,27 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(body);
-
     }
 
-    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(
-            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
 
-        String firstError = ex.getBindingResult()
+        Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(e -> e.getField() + " : " + e.getDefaultMessage())
-                .findFirst()
-                .orElse("Erreur de validation");
+                .collect(Collectors.toMap(
+                        fe -> fe.getField(),
+                        fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value",
+                        (a, b) -> a
+                ));
 
         Map<String, Object> body = new java.util.HashMap<>();
         body.put("timestamp", java.time.LocalDateTime.now().toString());
         body.put("status", 400);
         body.put("error", "Bad Request");
-        body.put("message", firstError);
+        body.put("message", "Validation error");
+        body.put("fields", fieldErrors);
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body(body);
-
     }
 }

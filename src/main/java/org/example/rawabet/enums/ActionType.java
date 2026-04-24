@@ -4,5 +4,8 @@ public enum ActionType {
     CINEMA,
     EVENT,
     CLUB,
-    BONUS
+    BONUS,
+    TRANSFER_OUT,   // débit expéditeur
+    TRANSFER_IN,    // crédit destinataire
+    REWARD_REDEEMED // utilisation d'une récompense
 }

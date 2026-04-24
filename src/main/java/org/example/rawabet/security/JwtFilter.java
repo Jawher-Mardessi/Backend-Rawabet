@@ -8,20 +8,23 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.repositories.UserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
+    private final JwtService     jwtService;
     private final UserRepository userRepository;
 
     public JwtFilter(JwtService jwtService, UserRepository userRepository) {
-        this.jwtService = jwtService;
+        this.jwtService     = jwtService;
         this.userRepository = userRepository;
     }
 
@@ -31,11 +34,16 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // ✅ FIX : utiliser getRequestURI() au lieu de getServletPath()
         String path = request.getRequestURI();
 
-        // ✅ ignorer /auth/** et /users/add
-        if (path.contains("/auth/") || path.equals("/rawabet/users/add")) {
+        // Routes publiques — pas de vérification JWT
+        if (path.contains("/auth/login")
+                || path.contains("/auth/forgot-password")
+                || path.contains("/auth/reset-password")
+                || path.contains("/auth/verify-email")
+                || path.contains("/auth/suspect-alert")
+                || path.equals("/rawabet/users/add")
+                || path.startsWith("/rawabet/ws/")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -48,28 +56,48 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
-            String token = authHeader.substring(7);
-            String email = jwtService.extractEmail(token);
+            String token        = authHeader.substring(7);
+            String email        = jwtService.extractEmail(token);
+            int    tokenVersion = jwtService.extractTokenVersion(token);   // ← méthode ajoutée
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 User user = userRepository.findByEmail(email).orElse(null);
 
-                if (user != null) {
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(
-                                    user,
-                                    null,
-                                    user.getRoles().stream()
-                                            .flatMap(role -> role.getPermissions().stream())
-                                            .map(permission -> new org.springframework.security.core.authority.SimpleGrantedAuthority(permission.getName()))
-                                            .toList()
-                            );
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                if (user != null && user.getTokenVersion() == tokenVersion) {
+
+                    // ── Vérification ban temporaire ──────────────────────────
+                    // Un ban temporaire expiré → réactiver silencieusement
+                    boolean isBanned = false;
+                    if (!user.isActive()) {
+                        if (user.getBanUntil() != null
+                                && LocalDateTime.now().isAfter(user.getBanUntil())) {
+                            // Ban expiré → réactiver (le prochain login le fera proprement)
+                            // Ici on laisse passer pour ne pas bloquer les sessions légitimes
+                            isBanned = false;
+                        } else {
+                            isBanned = true;
+                        }
+                    }
+
+                    if (!isBanned) {
+                        // Construire les authorities depuis les permissions des rôles
+                        List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                                .flatMap(role -> role.getPermissions().stream())
+                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                .distinct()
+                                .toList();
+
+                        UsernamePasswordAuthenticationToken auth =
+                                new UsernamePasswordAuthenticationToken(user, null, authorities);
+
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    }
                 }
             }
 
         } catch (Exception e) {
+            // Token invalide, expiré ou malformé → pas d'authentification
             System.err.println("JWT error: " + e.getMessage());
             SecurityContextHolder.clearContext();
         }

@@ -29,9 +29,10 @@ public class FeedbackServiceImpl implements IFeedbackService {
     private FilmRepository filmRepository;
 
     @Override
-    public FeedbackResponse addFeedback(CreateFeedbackRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public FeedbackResponse addFeedback(CreateFeedbackRequest request, String email) {
+        // Récupère l'utilisateur connecté via son email (extrait du JWT)
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur connecté introuvable"));
 
         Film film = filmRepository.findById(request.getFilmId())
                 .orElseThrow(() -> new RuntimeException("Film not found"));
@@ -44,28 +45,28 @@ public class FeedbackServiceImpl implements IFeedbackService {
         feedback.setFilm(film);
 
         feedback = feedbackRepository.save(feedback);
-
         return mapToResponse(feedback);
     }
 
     @Override
-    public FeedbackResponse updateFeedback(UpdateFeedbackRequest request) {
+    public FeedbackResponse updateFeedback(UpdateFeedbackRequest request, String email) {
         Feedback feedback = feedbackRepository.findById(request.getId())
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Vérifie que c'est bien le propriétaire du feedback
+        if (!feedback.getUser().getEmail().equals(email)) {
+            throw new RuntimeException("Non autorisé à modifier ce feedback");
+        }
 
         Film film = filmRepository.findById(request.getFilmId())
                 .orElseThrow(() -> new RuntimeException("Film not found"));
 
         feedback.setNote(request.getNote());
         feedback.setCommentaire(request.getCommentaire());
-        feedback.setUser(user);
         feedback.setFilm(film);
+        // NE PAS toucher setUser() — déjà le bon utilisateur
 
         feedback = feedbackRepository.save(feedback);
-
         return mapToResponse(feedback);
     }
 
@@ -83,6 +84,14 @@ public class FeedbackServiceImpl implements IFeedbackService {
     @Override
     public List<FeedbackResponse> getAll() {
         return feedbackRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FeedbackResponse> getMyFeedbacks(String email) {
+        return feedbackRepository.findByUserEmail(email)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());

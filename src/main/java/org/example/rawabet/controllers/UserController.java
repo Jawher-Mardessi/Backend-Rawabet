@@ -2,15 +2,15 @@ package org.example.rawabet.controllers;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.rawabet.dto.RegisterRequest;
-import org.example.rawabet.dto.UserResponse;
+import org.example.rawabet.dto.*;
 import org.example.rawabet.services.IUserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.example.rawabet.dto.UpdateProfileRequest;
-import org.example.rawabet.dto.ChangePasswordRequest;
-
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/users")
@@ -19,97 +19,108 @@ public class UserController {
 
     private final IUserService userService;
 
-    // =========================
-    // 👤 REGISTER (CLIENT)
-    // =========================
+    // ── Register (public) ──────────────────────────────────────────────────
     @PostMapping("/add")
     public UserResponse register(@Valid @RequestBody RegisterRequest request) {
         return userService.register(request);
     }
 
-    // =========================
-    // 🔐 CREATE USER (ADMIN)
-    // =========================
+    // ── Create by admin ────────────────────────────────────────────────────
     @PostMapping("/add-with-role")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public UserResponse createUserByAdmin(@Valid @RequestBody RegisterRequest request) {
         return userService.createUserByAdmin(request);
     }
 
-    // =========================
-    // ✏️ UPDATE USER
-    // =========================
-    @PutMapping("/update")
-    public UserResponse updateUser(@Valid @RequestBody RegisterRequest request,
-                                   @RequestParam Long id) {
+    // ── Update user (admin) ────────────────────────────────────────────────
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    public UserResponse updateUser(@PathVariable Long id,
+                                   @Valid @RequestBody RegisterRequest request) {
         return userService.updateUser(id, request);
     }
 
-    // =========================
-    // ❌ DELETE USER
-    // =========================
+    // ── Update roles ───────────────────────────────────────────────────────
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
+    public UserResponse updateUserRoles(@PathVariable Long id,
+                                        @Valid @RequestBody UpdateUserRolesRequest request) {
+        return userService.updateUserRoles(id, request);
+    }
+
+    // ── Delete ─────────────────────────────────────────────────────────────
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
 
-    // =========================
-    // 🔍 GET USER BY ID
-    // =========================
+    // ── Get by id ──────────────────────────────────────────────────────────
     @GetMapping("/get/{id}")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
     public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
-    // =========================
-    // 📋 GET ALL USERS
-    // =========================
+    // ── Get all paged ──────────────────────────────────────────────────────
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
-    public List<UserResponse> getAllUsers() {
-        return userService.getAllUsers();
+    public Page<UserResponse> getAllUsers(
+            @RequestParam(defaultValue = "0")         int page,
+            @RequestParam(defaultValue = "20")        int size,
+            @RequestParam(defaultValue = "createdAt") String sort,
+            @RequestParam(defaultValue = "desc")      String direction) {
+
+        Sort sortObj = direction.equalsIgnoreCase("asc")
+                ? Sort.by(sort).ascending()
+                : Sort.by(sort).descending();
+
+        return userService.getAllUsers(PageRequest.of(page, size, sortObj));
     }
 
-    // =========================
-// 👤 GET MY PROFILE
-// =========================
+    // ── My profile ─────────────────────────────────────────────────────────
     @GetMapping("/me")
     public UserResponse getMyProfile() {
         return userService.getMyProfile();
     }
 
-    // =========================
-// ✏️ UPDATE MY PROFILE
-// =========================
     @PutMapping("/me/update")
     public UserResponse updateMyProfile(@Valid @RequestBody UpdateProfileRequest request) {
         return userService.updateMyProfile(request);
     }
 
-    // =========================
-// 🔐 CHANGE PASSWORD
-// =========================
+    @PostMapping(value = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public UserResponse uploadMyAvatar(@RequestPart("file") MultipartFile file) {
+        return userService.uploadMyAvatar(file);
+    }
+
     @PutMapping("/me/password")
     public String changeMyPassword(@Valid @RequestBody ChangePasswordRequest request) {
         userService.changeMyPassword(request);
         return "✅ Mot de passe modifié avec succès";
     }
 
-    // 🚫 BAN USER
+    // ── BAN TEMPORAIRE ────────────────────────────────────────────────────
+    /**
+     * Ban temporaire ou permanent avec durée configurable.
+     *
+     * Corps JSON :
+     * {
+     *   "banUntil": "2026-05-01T18:00:00",   // null = ban permanent
+     *   "reason":   "Comportement inapproprié"
+     * }
+     */
     @PutMapping("/{id}/ban")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
-    public String banUser(@PathVariable Long id) {
-        userService.banUser(id);
-        return "✅ User " + id + " banni avec succès";
+    public UserResponse banUser(@PathVariable Long id,
+                                @Valid @RequestBody BanRequest request) {
+        return userService.banUser(id, request);
     }
 
-    // ✅ UNBAN USER
+    // ── UNBAN ─────────────────────────────────────────────────────────────
     @PutMapping("/{id}/unban")
     @PreAuthorize("hasAuthority('ADMIN_MANAGE')")
-    public String unbanUser(@PathVariable Long id) {
-        userService.unbanUser(id);
-        return "✅ User " + id + " réactivé avec succès";
+    public UserResponse unbanUser(@PathVariable Long id) {
+        return userService.unbanUser(id);
     }
 }

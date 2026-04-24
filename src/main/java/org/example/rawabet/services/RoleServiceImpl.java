@@ -45,17 +45,26 @@ public class RoleServiceImpl implements RoleService {
             throw new RuntimeException("Role already exists");
         }
 
+        if ("SUPER_ADMIN".equals(roleName)) {
+            throw new RuntimeException("Cannot create SUPER_ADMIN role");
+        }
+
+        List<String> permissionNames = request.getPermissions().stream()
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
+
         // 🔐 BLOCK ADMIN_MANAGE
-        if (request.getPermissions().contains("ADMIN_MANAGE")) {
+        if (permissionNames.contains("ADMIN_MANAGE")) {
             throw new RuntimeException("Cannot assign ADMIN_MANAGE permission");
         }
 
         // 🔐 FETCH PERMISSIONS
         List<Permission> permissions =
-                permissionRepository.findByNameIn(request.getPermissions());
+                permissionRepository.findByNameIn(permissionNames);
 
-        if (permissions.isEmpty()) {
-            throw new RuntimeException("No valid permissions found");
+        if (permissions.size() != permissionNames.size()) {
+            throw new RuntimeException("Some permissions are invalid");
         }
 
         Role role = new Role();
@@ -81,16 +90,21 @@ public class RoleServiceImpl implements RoleService {
             throw new RuntimeException("Cannot modify SUPER_ADMIN role");
         }
 
+        List<String> permissionNames = request.getPermissions().stream()
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
+
         // 🔐 BLOCK ADMIN_MANAGE
-        if (request.getPermissions().contains("ADMIN_MANAGE")) {
+        if (permissionNames.contains("ADMIN_MANAGE")) {
             throw new RuntimeException("Cannot assign ADMIN_MANAGE permission");
         }
 
         List<Permission> permissions =
-                permissionRepository.findByNameIn(request.getPermissions());
+                permissionRepository.findByNameIn(permissionNames);
 
-        if (permissions.isEmpty()) {
-            throw new RuntimeException("No valid permissions found");
+        if (permissions.size() != permissionNames.size()) {
+            throw new RuntimeException("Some permissions are invalid");
         }
 
         role.setPermissions(permissions);
@@ -110,6 +124,14 @@ public class RoleServiceImpl implements RoleService {
         // 🔐 PROTECT SUPER ADMIN
         if (Objects.equals(role.getName(), "SUPER_ADMIN")) {
             throw new RuntimeException("Cannot delete SUPER_ADMIN");
+        }
+
+        if ("CLIENT".equals(role.getName())) {
+            throw new RuntimeException("Cannot delete CLIENT role");
+        }
+
+        if (role.getUsers() != null && !role.getUsers().isEmpty()) {
+            throw new RuntimeException("Cannot delete a role assigned to existing users");
         }
 
         roleRepository.delete(role);
