@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Existant — inchangé
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
         return ResponseEntity
@@ -23,15 +22,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, String>> handleDataIntegrity(DataIntegrityViolationException e) {
-    String msg = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : null;
-    if (msg != null && msg.toLowerCase().contains("email")) {
+        String msg = e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : null;
+        if (msg != null && msg.toLowerCase().contains("email")) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Email already exists"));
+        }
         return ResponseEntity
-            .status(HttpStatus.CONFLICT)
-            .body(Map.of("error", "Email already exists"));
-    }
-    return ResponseEntity
-        .status(HttpStatus.CONFLICT)
-        .body(Map.of("error", "Data integrity constraint violation"));
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Data integrity constraint violation"));
     }
 
     @ExceptionHandler(org.example.rawabet.cinema.exceptions.ResourceNotFoundException.class)
@@ -45,7 +44,6 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(body);
-
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -58,21 +56,19 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return ResponseEntity.status(org.springframework.http.HttpStatus.CONFLICT).body(body);
-
     }
 
-        @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(
-            MethodArgumentNotValidException ex) {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
 
         Map<String, String> fieldErrors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
-            .collect(Collectors.toMap(
-                fe -> fe.getField(),
-                fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value",
-                (a, b) -> a
-            ));
+                .collect(Collectors.toMap(
+                        fe -> fe.getField(),
+                        fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value",
+                        (a, b) -> a
+                ));
 
         Map<String, Object> body = new java.util.HashMap<>();
         body.put("timestamp", java.time.LocalDateTime.now().toString());
