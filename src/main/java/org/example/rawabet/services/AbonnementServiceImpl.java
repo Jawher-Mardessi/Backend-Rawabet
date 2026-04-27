@@ -3,6 +3,9 @@ package org.example.rawabet.services;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.dto.SubscribeResponse;
+import org.example.rawabet.dto.SubscriptionDto;
+import org.example.rawabet.dto.TimelineResponse;
 import org.example.rawabet.dto.UserSubscriptionResponse;
 import org.example.rawabet.entities.Abonnement;
 import org.example.rawabet.entities.QRCode;
@@ -10,6 +13,7 @@ import org.example.rawabet.entities.User;
 import org.example.rawabet.entities.UserAbonnement;
 import org.example.rawabet.enums.ActionType;
 import org.example.rawabet.enums.AbonnementType;
+import org.example.rawabet.enums.SubscriptionStatus;
 import org.example.rawabet.repositories.AbonnementRepository;
 import org.example.rawabet.repositories.QRCodeRepository;
 import org.example.rawabet.repositories.UserAbonnementRepository;
@@ -21,7 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +40,8 @@ public class AbonnementServiceImpl {
     private final UserRepository userRepository;
     private final ICarteFideliteService carteFideliteService;
     private final QRCodeRepository qrCodeRepository;
+
+    // ==================== Initialization ====================
 
     public void initAbonnements() {
         if (abonnementRepository.count() == 0) {
@@ -49,38 +57,238 @@ public class AbonnementServiceImpl {
         }
     }
 
-    public List<Abonnement> getAllAbonnements() {
-        return abonnementRepository.findAll();
+    public List<UserAbonnement> getAllAbonnements() {
+        return userAbonnementRepository.findAll();
     }
 
     @Transactional
-    public UserSubscriptionResponse subscribe(Long userId, Long abonnementId) {
-        cleanupExpiredUserAbonnements();
+    public void deleteSubscriptionById(Long subscriptionId) {
+        UserAbonnement subscription = userAbonnementRepository.findById(subscriptionId)
+                .orElseThrow(() -> new RuntimeException("Subscription not found"));
 
+        qrCodeRepository.deleteByUserAbonnementId(subscriptionId);
+        userAbonnementRepository.delete(subscription);
+    }
+
+    // ==================== Subscription Management ====================
+
+    /**
+     * Subscribe a user to an abonnement.
+     * If no non-expired subscription exists, subscription starts TODAY (ACTIVATED_NOW).
+     * Otherwise, subscription is QUEUED_NEXT, starting the day after previous subscription ends.
+     */
+    @Transactional
+    public SubscribeResponse subscribe(Long userId, Long abonnementId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Abonnement abonnement = abonnementRepository.findById(abonnementId)
                 .orElseThrow(() -> new RuntimeException("Abonnement not found"));
 
-        UserAbonnement userAbonnement = userAbonnementRepository.findByUserId(userId)
-                .orElseGet(UserAbonnement::new);
+        // Read all existing subscriptions for this user (avoid overlap)
+        List<UserAbonnement> existingSubscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
 
-        applySubscription(userAbonnement, user, abonnement);
-        UserAbonnement savedSubscription = userAbonnementRepository.save(userAbonnement);
+        // Compute dates for the new subscription
+        LocalDate today = LocalDate.now();
+        LocalDate newDateDebut;
+        LocalDate newDateFin;
+        String resultType;
 
-        // Ensure the user has a loyalty card before awarding subscription points.
-        carteFideliteService.getCarteByUser(user);
+        // Check if there are any active or future subscriptions
+        Optional<UserAbonnement> futureSubscription = existingSubscriptions.stream()
+                .filter(ua -> ua.getDateDebut().isAfter(today) || (ua.getDateDebut().isBefore(today) || ua.getDateDebut().isEqual(today))
+                        && ua.getDateFin().isAfter(today) || ua.getDateFin().isEqual(today))
+                .findFirst();
 
-        int fidelityPoints = getSubscriptionFidelityPoints(abonnement.getType());
-        if (fidelityPoints > 0) {
-            carteFideliteService.addPoints(user, fidelityPoints, ActionType.BONUS);
+        if (futureSubscription.isEmpty()) {
+            // No active/future subscription: start TODAY
+            newDateDebut = today;
+            resultType = "ACTIVATED_NOW";
+        } else {
+            // There are active/future subscriptions: queue for the day after the last one ends
+            LocalDate lastEndDate = existingSubscriptions.stream()
+                    .map(UserAbonnement::getDateFin)
+                    .max(LocalDate::compareTo)
+                    .orElse(today);
+            newDateDebut = lastEndDate.plusDays(1);
+            resultType = "QUEUED_NEXT";
         }
 
+        // Compute dateFin based on subscription duration (1 month)
+        newDateFin = newDateDebut.plusMonths(1).minusDays(1);
+
+        // Create new subscription
+        UserAbonnement newSubscription = new UserAbonnement();
+        newSubscription.setUser(user);
+        newSubscription.setAbonnement(abonnement);
+        newSubscription.setTicketsRestants(resolveTicketsRestants(abonnement));
+        newSubscription.setDateDebut(newDateDebut);
+        newSubscription.setDateFin(newDateFin);
+
+        // Set status based on resultType
+        SubscriptionStatus status = resultType.equals("ACTIVATED_NOW") ? SubscriptionStatus.ACTIVE : SubscriptionStatus.QUEUED;
+        newSubscription.setStatus(status);
+
+        UserAbonnement savedSubscription = userAbonnementRepository.save(newSubscription);
+
+        // Award fidelity points only for immediately activated subscriptions
+        if (status == SubscriptionStatus.ACTIVE) {
+            carteFideliteService.getCarteByUser(user);
+            int fidelityPoints = getSubscriptionFidelityPoints(abonnement.getType());
+            if (fidelityPoints > 0) {
+                carteFideliteService.addPoints(user, fidelityPoints, ActionType.BONUS);
+            }
+        }
+
+        // Generate QR code
         generateQRCode(savedSubscription);
 
-        return mapToSubscriptionResponse(savedSubscription);
+        // Build response
+        return SubscribeResponse.builder()
+                .userId(userId)
+                .subscriptionId(savedSubscription.getId())
+                .abonnementId(abonnement.getId())
+                .abonnementType(abonnement.getType().name())
+                .dateDebut(newDateDebut)
+                .dateFin(newDateFin)
+                .ticketsRestants(savedSubscription.getTicketsRestants())
+                .status(status)
+                .resultType(resultType)
+                .message(resultType.equals("ACTIVATED_NOW")
+                        ? "Subscription activated now"
+                        : "Subscription queued and will start on " + newDateDebut)
+                .build();
     }
+
+    // ==================== Status Management ====================
+
+    /**
+     * Compute subscription status based on date and tickets.
+     */
+    public SubscriptionStatus computeStatus(UserAbonnement subscription) {
+        LocalDate today = LocalDate.now();
+
+        if (subscription.getDateDebut().isAfter(today)) {
+            return SubscriptionStatus.QUEUED;
+        }
+
+        if (subscription.getDateFin().isBefore(today)) {
+            return SubscriptionStatus.EXPIRED;
+        }
+
+        // Today is within dateDebut and dateFin
+        // Check for exhausted status (tickets = 0 but still within valid dates)
+        if (!subscription.getAbonnement().isIllimite() && subscription.getTicketsRestants() <= 0) {
+            return SubscriptionStatus.EXHAUSTED;
+        }
+
+        return SubscriptionStatus.ACTIVE;
+    }
+
+    /**
+     * Update status of all user subscriptions based on current logic.
+     */
+    @Transactional
+    public void updateSubscriptionStatuses(Long userId) {
+        List<UserAbonnement> subscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
+        for (UserAbonnement subscription : subscriptions) {
+            SubscriptionStatus newStatus = computeStatus(subscription);
+            if (!newStatus.equals(subscription.getStatus())) {
+                subscription.setStatus(newStatus);
+                userAbonnementRepository.save(subscription);
+            }
+        }
+    }
+
+    /**
+     * Scheduled job to update statuses of all subscriptions.
+     * Can be called daily to ensure fresh status without relying on subscription access.
+     */
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void refreshAllSubscriptionStatuses() {
+        List<UserAbonnement> allSubscriptions = userAbonnementRepository.findAll();
+        for (UserAbonnement subscription : allSubscriptions) {
+            SubscriptionStatus newStatus = computeStatus(subscription);
+            if (!newStatus.equals(subscription.getStatus())) {
+                subscription.setStatus(newStatus);
+            }
+        }
+    }
+
+    // ==================== Timeline Endpoint ====================
+
+    /**
+     * Get comprehensive timeline for a user:
+     * - currentSubscription: active subscription (null if none)
+     * - nextSubscription: first QUEUED subscription (null if none)
+     * - queuedSubscriptions: all QUEUED subscriptions sorted by dateDebut asc
+     * - history: all EXPIRED subscriptions sorted by dateDebut desc
+     */
+    public TimelineResponse getTimelineForUser(Long userId) {
+        updateSubscriptionStatuses(userId);
+
+        List<UserAbonnement> allSubscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
+
+        SubscriptionDto currentSubscription = null;
+        SubscriptionDto nextSubscription = null;
+        List<SubscriptionDto> queuedSubscriptions = allSubscriptions.stream()
+                .filter(ua -> ua.getStatus() == SubscriptionStatus.QUEUED)
+                .map(this::mapToSubscriptionDto)
+                .collect(Collectors.toList());
+
+        // Find current subscription
+        Optional<UserAbonnement> current = allSubscriptions.stream()
+                .filter(ua -> ua.getStatus() == SubscriptionStatus.ACTIVE)
+                .findFirst();
+        if (current.isPresent()) {
+            currentSubscription = mapToSubscriptionDto(current.get());
+        }
+
+        // Next subscription is the first queued
+        if (!queuedSubscriptions.isEmpty()) {
+            nextSubscription = queuedSubscriptions.get(0);
+        }
+
+        // History includes expired and exhausted (sorted by dateDebut desc)
+        List<SubscriptionDto> history = allSubscriptions.stream()
+                .filter(ua -> ua.getStatus() == SubscriptionStatus.EXPIRED || ua.getStatus() == SubscriptionStatus.EXHAUSTED)
+                .sorted((a, b) -> b.getDateDebut().compareTo(a.getDateDebut()))
+                .map(this::mapToSubscriptionDto)
+                .collect(Collectors.toList());
+
+        return TimelineResponse.builder()
+                .userId(userId)
+                .currentSubscription(currentSubscription)
+                .nextSubscription(nextSubscription)
+                .queuedSubscriptions(queuedSubscriptions)
+                .history(history)
+                .build();
+    }
+
+    // ==================== User Subscriptions ====================
+
+    /**
+     * Get all subscriptions for a user, sorted by dateDebut ascending.
+     */
+    public List<SubscriptionDto> getUserSubscriptions(Long userId) {
+        updateSubscriptionStatuses(userId);
+        List<UserAbonnement> subscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
+        return subscriptions.stream()
+                .map(this::mapToSubscriptionDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get plain abonnements linked to a user.
+     */
+    public List<Abonnement> getAbonnementsByUserId(Long userId) {
+        return userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId).stream()
+                .map(UserAbonnement::getAbonnement)
+                .collect(Collectors.toList());
+    }
+
+    // ==================== QR Code Management ====================
 
     @Transactional
     public void generateQRCode(UserAbonnement userAbonnement) {
@@ -106,6 +314,16 @@ public class AbonnementServiceImpl {
         }
 
         UserAbonnement userAbonnement = qrCode.getUserAbonnement();
+
+        // Verify subscription is ACTIVE
+        SubscriptionStatus status = computeStatus(userAbonnement);
+        if (status != SubscriptionStatus.ACTIVE) {
+            if (status == SubscriptionStatus.QUEUED) {
+                throw new RuntimeException("Subscription not active yet, starts on " + userAbonnement.getDateDebut());
+            }
+            throw new RuntimeException("Subscription not active (status: " + status + ")");
+        }
+
         if (userAbonnement.getTicketsRestants() <= 0) {
             throw new RuntimeException("No tickets remaining");
         }
@@ -133,43 +351,66 @@ public class AbonnementServiceImpl {
     }
 
     public String getQRCodeByUserId(Long userId) {
-        UserAbonnement userAbonnement = userAbonnementRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Subscription not found"));
+        // Get the ACTIVE subscription only
+        LocalDate today = LocalDate.now();
+        List<UserAbonnement> subscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
 
-        QRCode qrCode = qrCodeRepository.findByUserAbonnementId(userAbonnement.getId())
+        UserAbonnement activeSubscription = subscriptions.stream()
+                .filter(ua -> ua.getStatus() == SubscriptionStatus.ACTIVE
+                        || (ua.getDateDebut().isBefore(today) || ua.getDateDebut().isEqual(today))
+                           && (ua.getDateFin().isAfter(today) || ua.getDateFin().isEqual(today)))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No active subscription found for this user"));
+
+        QRCode qrCode = qrCodeRepository.findByUserAbonnementId(activeSubscription.getId())
                 .orElseThrow(() -> new RuntimeException("QR Code not found for this user"));
 
         return qrCode.getCode();
     }
 
+    // ==================== Legacy Methods (Backward Compatibility) ====================
+
+
+    /**
+     * DEPRECATED: Use getTimelineForUser instead.
+     * Returns the first active subscription only.
+     */
+    @Deprecated
     public List<UserAbonnement> getUserAbonnements() {
-        cleanupExpiredUserAbonnements();
         return userAbonnementRepository.findAll();
     }
 
+    /**
+     * DEPRECATED: Use getTimelineForUser instead.
+     * Returns only the current active subscription.
+     */
+    @Deprecated
     public UserSubscriptionResponse getSubscriptionByUserId(Long userId) {
-        cleanupExpiredUserAbonnements();
-        UserAbonnement userAbonnement = userAbonnementRepository.findByUserId(userId)
+        LocalDate today = LocalDate.now();
+        List<UserAbonnement> subscriptions = userAbonnementRepository.findByUserIdOrderByDateDebutAsc(userId);
+
+        UserAbonnement activeSubscription = subscriptions.stream()
+                .filter(ua -> ua.getStatus() == SubscriptionStatus.ACTIVE
+                        || (ua.getDateDebut().isBefore(today) || ua.getDateDebut().isEqual(today))
+                           && (ua.getDateFin().isAfter(today) || ua.getDateFin().isEqual(today)))
+                .findFirst()
                 .orElseThrow(() -> new RuntimeException("Subscription not found for this user"));
 
-        return mapToSubscriptionResponse(userAbonnement);
+        return mapToSubscriptionResponse(activeSubscription);
     }
 
-    @Transactional
-    @Scheduled(cron = "0 0 * * * *")
+    /**
+     * DEPRECATED: No longer deletes subscriptions. Subscriptions are kept with EXPIRED status.
+     */
+    @Deprecated
     public long cleanupExpiredUserAbonnements() {
-        return userAbonnementRepository.deleteByDateFinBefore(LocalDate.now());
+        // No-op: subscriptions are no longer deleted
+        // Call updateSubscriptionStatuses for all users instead
+        refreshAllSubscriptionStatuses();
+        return 0;
     }
 
-    private void applySubscription(UserAbonnement userAbonnement, User user, Abonnement abonnement) {
-        userAbonnement.setUser(user);
-        userAbonnement.setAbonnement(abonnement);
-
-        userAbonnement.setTicketsRestants(resolveTicketsRestants(abonnement));
-
-        userAbonnement.setDateDebut(LocalDate.now());
-        userAbonnement.setDateFin(LocalDate.now().plusMonths(1));
-    }
+    // ==================== Helper Methods ====================
 
     private int getSubscriptionFidelityPoints(AbonnementType abonnementType) {
         if (abonnementType == AbonnementType.Premium) {
@@ -204,6 +445,25 @@ public class AbonnementServiceImpl {
                 .ticketsRestants(userAbonnement.getTicketsRestants())
                 .dateDebut(userAbonnement.getDateDebut())
                 .dateFin(userAbonnement.getDateFin())
+                .build();
+    }
+
+    private SubscriptionDto mapToSubscriptionDto(UserAbonnement userAbonnement) {
+        String qrCode = qrCodeRepository.findByUserAbonnementId(userAbonnement.getId())
+                .map(QRCode::getCode)
+                .orElse(null);
+
+        return SubscriptionDto.builder()
+                .subscriptionId(userAbonnement.getId())
+                .abonnementId(userAbonnement.getAbonnement().getId())
+                .abonnementType(userAbonnement.getAbonnement().getType().name())
+                .abonnementName(userAbonnement.getAbonnement().getNom())
+                .qrCode(qrCode)
+                .dateDebut(userAbonnement.getDateDebut())
+                .dateFin(userAbonnement.getDateFin())
+                .ticketsRestants(userAbonnement.getTicketsRestants())
+                .isIllimited(userAbonnement.getAbonnement().isIllimite())
+                .status(userAbonnement.getStatus())
                 .build();
     }
 }

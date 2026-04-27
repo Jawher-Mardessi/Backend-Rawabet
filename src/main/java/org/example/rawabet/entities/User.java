@@ -51,8 +51,9 @@ public class User {
     @JsonIgnore
     private CarteFidelite carteFidelite;
 
-    @OneToOne(mappedBy = "user")
-    private UserAbonnement abonnement;
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private List<UserAbonnement> abonnements;
 
     public Long getId() {
         return id;
@@ -134,11 +135,11 @@ public class User {
         this.carteFidelite = carteFidelite;
     }
 
-    public UserAbonnement getAbonnement() {
-        return abonnement;
+    public List<UserAbonnement> getAbonnements() {
+        return abonnements;
     }
 
-    public void setAbonnement(UserAbonnement abonnement) {
-        this.abonnement = abonnement;
+    public void setAbonnements(List<UserAbonnement> abonnements) {
+        this.abonnements = abonnements;
     }
 }

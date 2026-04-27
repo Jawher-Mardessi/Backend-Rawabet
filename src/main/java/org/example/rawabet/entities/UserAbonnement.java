@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.example.rawabet.enums.SubscriptionStatus;
 
 import java.time.LocalDate;
 
@@ -15,7 +16,7 @@ public class UserAbonnement {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @ManyToOne
     private User user;
 
     @ManyToOne
@@ -26,47 +27,6 @@ public class UserAbonnement {
     private LocalDate dateDebut;
     private LocalDate dateFin;
 
-    public void setAbonnement(Abonnement abonnement) {
-        this.abonnement = abonnement;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public void setTicketsRestants(int ticketsRestants) {
-        this.ticketsRestants = ticketsRestants;
-    }
-
-    public void setDateDebut(LocalDate dateDebut) {
-        this.dateDebut = dateDebut;
-    }
-
-    public void setDateFin(LocalDate dateFin) {
-        this.dateFin = dateFin;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public Abonnement getAbonnement() {
-        return abonnement;
-    }
-
-    public int getTicketsRestants() {
-        return ticketsRestants;
-    }
-
-    public LocalDate getDateFin() {
-        return dateFin;
-    }
-
-    public LocalDate getDateDebut() {
-        return dateDebut;
-    }
+    @Enumerated(EnumType.STRING)
+    private SubscriptionStatus status;
 }

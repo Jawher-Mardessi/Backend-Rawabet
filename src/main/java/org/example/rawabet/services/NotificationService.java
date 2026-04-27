@@ -176,9 +176,10 @@ public class NotificationService {
     private List<User> getActiveSubscribers() {
         LocalDate today = LocalDate.now();
         return userRepository.findAll().stream()
-                .filter(user -> user.getAbonnement() != null
-                        && user.getAbonnement().getDateFin() != null
-                        && !user.getAbonnement().getDateFin().isBefore(today))
+                .filter(user -> user.getAbonnements() != null
+                        && user.getAbonnements().stream()
+                            .anyMatch(sub -> sub.getDateFin() != null
+                                && !sub.getDateFin().isBefore(today)))
                 .collect(Collectors.toList());
     }
 

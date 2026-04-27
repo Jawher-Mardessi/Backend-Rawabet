@@ -5,8 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.example.rawabet.dto.SubscribeResponse;
+import org.example.rawabet.dto.SubscriptionDto;
+import org.example.rawabet.dto.TimelineResponse;
 import org.example.rawabet.dto.UserSubscriptionResponse;
 import org.example.rawabet.entities.Abonnement;
+import org.example.rawabet.entities.UserAbonnement;
 import org.example.rawabet.services.AbonnementServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,14 +24,22 @@ import java.util.List;
 public class AbonnementController {
     private final AbonnementServiceImpl abonnementService;
 
-    @GetMapping
-    public List<Abonnement> getAll() {
+    // ==================== Abonnement Management ====================
+
+    @GetMapping("/all")
+    public List<UserAbonnement> getAll() {
         return abonnementService.getAllAbonnements();
     }
 
+    // ==================== Subscribe ====================
+
+    /**
+     * Subscribe a user to an abonnement.
+     * Returns detailed response with status and resultType (ACTIVATED_NOW or QUEUED_NEXT).
+     */
     @PostMapping("/subscribe")
     @PreAuthorize("isAuthenticated()")
-    public UserSubscriptionResponse subscribe(
+    public SubscribeResponse subscribe(
             @RequestParam Long userId,
             @RequestParam Long abonnementId
     ) {
@@ -36,18 +48,63 @@ public class AbonnementController {
 
     @PostMapping("/subscribe/{userId}/{abonnementId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserSubscriptionResponse> subscribeWithPathVariables(
+    public ResponseEntity<SubscribeResponse> subscribeWithPathVariables(
             @PathVariable Long userId,
             @PathVariable Long abonnementId
     ) {
         return ResponseEntity.ok(abonnementService.subscribe(userId, abonnementId));
     }
 
+    // ==================== Timeline Endpoint ====================
+
+    /**
+     * Get comprehensive timeline for a user's subscriptions.
+     * Includes current, next queued, all queued, and history.
+     */
+    @GetMapping("/users/{userId}/timeline")
+    @PreAuthorize("isAuthenticated()")
+    public TimelineResponse getTimelineForUser(@PathVariable Long userId) {
+        return abonnementService.getTimelineForUser(userId);
+    }
+
+    // ==================== User Subscriptions ====================
+
+    /**
+     * Get all subscriptions for a specific user, sorted by dateDebut ascending.
+     * Each subscription includes its status.
+     */
+    @GetMapping("/users/{userId}/all")
+    @PreAuthorize("isAuthenticated()")
+    public List<SubscriptionDto> getAllUserSubscriptions(@PathVariable Long userId) {
+        return abonnementService.getUserSubscriptions(userId);
+    }
+
+    @GetMapping("/users/{userId}/abonnements")
+    @PreAuthorize("isAuthenticated()")
+    public List<Abonnement> getUserAbonnementsList(@PathVariable Long userId) {
+        return abonnementService.getAbonnementsByUserId(userId);
+    }
+
+    @DeleteMapping("/subscriptions/{subscriptionId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteSubscriptionById(@PathVariable Long subscriptionId) {
+        abonnementService.deleteSubscriptionById(subscriptionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ==================== Legacy Endpoints (Backward Compatibility) ====================
+
+    /**
+     * DEPRECATED: Use /users/{userId}/timeline instead.
+     */
+    @Deprecated
     @GetMapping("/users/{userId}")
     @PreAuthorize("isAuthenticated()")
     public UserSubscriptionResponse getSubscriptionByUserId(@PathVariable Long userId) {
         return abonnementService.getSubscriptionByUserId(userId);
     }
+
+    // ==================== QR Code Management ====================
 
     @GetMapping("/qr/{userId}")
     @PreAuthorize("isAuthenticated()")
@@ -64,6 +121,10 @@ public class AbonnementController {
         }
     }
 
+    /**
+     * Scan a QR code and consume a ticket.
+     * Requires the subscription to be ACTIVE.
+     */
     @PostMapping("/scan")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> scanQRCode(@RequestBody ScanRequest request) {
@@ -79,10 +140,19 @@ public class AbonnementController {
         }
     }
 
+    // ==================== Cleanup (Deprecated) ====================
+
+    /**
+     * DEPRECATED: Subscriptions are no longer deleted.
+     * This endpoint now just refreshes statuses.
+     */
+    @Deprecated
     @DeleteMapping("/users/expired")
     public long cleanupExpiredUserAbonnements() {
         return abonnementService.cleanupExpiredUserAbonnements();
     }
+
+    // ==================== Response DTOs ====================
 
     @Getter
     @AllArgsConstructor

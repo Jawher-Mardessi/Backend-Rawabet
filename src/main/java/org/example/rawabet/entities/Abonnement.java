@@ -3,9 +3,12 @@ package org.example.rawabet.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.rawabet.enums.AbonnementType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
 
 @Entity
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class Abonnement {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,55 +27,19 @@ public class Abonnement {
 
     private double prix;
 
-    public Long getId() {
-        return id;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "abonnement")
+    private List<UserAbonnement> subscriptions;
 
-    public AbonnementType getType() {
-        return type;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public int getNbTicketsParMois() {
-        return nbTicketsParMois;
-    }
-
-    public boolean isIllimite() {
-        return illimite;
-    }
-
-    public boolean isPopcornGratuit() {
-        return popcornGratuit;
-    }
-
-    public double getPrix() {
-        return prix;
-    }
-
-    public void setType(AbonnementType type) {
+    // Constructor for initialization (without subscriptions)
+    public Abonnement(Long id, AbonnementType type, String nom, int nbTicketsParMois,
+                      boolean illimite, boolean popcornGratuit, double prix) {
+        this.id = id;
         this.type = type;
-    }
-
-    public void setNom(String nom) {
         this.nom = nom;
-    }
-
-    public void setNbTicketsParMois(int nbTicketsParMois) {
         this.nbTicketsParMois = nbTicketsParMois;
-    }
-
-    public void setIllimite(boolean illimite) {
         this.illimite = illimite;
-    }
-
-    public void setPopcornGratuit(boolean popcornGratuit) {
         this.popcornGratuit = popcornGratuit;
-    }
-
-    public void setPrix(double prix) {
         this.prix = prix;
     }
 }
