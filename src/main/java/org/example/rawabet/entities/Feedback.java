@@ -21,9 +21,11 @@ public class Feedback {
     private java.time.LocalDate date;
 
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
+    @JoinColumn(name = "film_id")
     private Film film;
 
     public Long getId() {

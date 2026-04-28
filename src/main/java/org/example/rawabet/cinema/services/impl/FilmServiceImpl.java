@@ -61,8 +61,9 @@ public class FilmServiceImpl implements IFilmService {
     public List<FilmResponse> getActiveFilms() {
 
         return filmRepository
-                .findByIsActiveTrue()
+                .findAll()
                 .stream()
+                .filter(film -> film.getIsActive() == null || Boolean.TRUE.equals(film.getIsActive()))
                 .map(FilmMapper::toResponse)
                 .toList();
 

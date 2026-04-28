@@ -1,5 +1,6 @@
 package org.example.rawabet.cinema.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.rawabet.cinema.enums.HallType;
@@ -39,6 +40,8 @@ public class SalleCinema extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cinema_id", nullable = false)
+    @JsonIgnoreProperties("salles")  // ← AJOUTE CETTE LIGNE
+
     private Cinema cinema;
 
     @OneToMany(

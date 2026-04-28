@@ -24,4 +24,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findBySeanceId(Long seanceId);
 
     Optional<Seat> findBySeatNumberAndSeanceId(Integer seatNumber, Long seanceId);
+
+    List<Seat> findByRowSalleIdAndIsActiveTrue(Long salleId);
+
+    Optional<Seat> findBySeatNumberAndRowSalleIdAndIsActiveTrue(Integer seatNumber, Long salleId);
+    
 }

@@ -3,7 +3,6 @@ package org.example.rawabet.services;
 import org.example.rawabet.dto.reservationCinema.request.CreateReservationCinemaRequest;
 import org.example.rawabet.dto.reservationCinema.response.ReservationCinemaResponse;
 import org.example.rawabet.entities.ReservationCinema;
-
 import java.util.List;
 
 public interface IReservationCinemaService {
@@ -16,7 +15,7 @@ public interface IReservationCinemaService {
 
     ReservationCinema getReservationById(Long id);
 
-    List<ReservationCinema> getAllReservations();
+    List<ReservationCinemaResponse> getAllReservations();
 
     ReservationCinemaResponse reserver(CreateReservationCinemaRequest request);
 }

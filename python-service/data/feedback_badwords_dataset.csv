@@ -1,0 +1,76 @@
+text,toxic,sentiment
+super film tres bonne projection,0,positive
+j ai adore le film et la salle,0,positive
+experience magnifique au cinema rawabet,0,positive
+service tres professionnel et rapide,0,positive
+ambiance parfaite son excellent,0,positive
+bravo a toute l equipe du cinema,0,positive
+film incroyable je recommande,0,positive
+excellent accueil et salle propre,0,positive
+projection fluide image tres nette,0,positive
+personnel aimable et attentionne,0,positive
+top seance merci rawabet,0,positive
+great movie and great service,0,positive
+amazing atmosphere and kind staff,0,positive
+i loved this screening,0,positive
+very good quality and comfort,0,positive
+this cinema experience was awesome,0,positive
+happy with the booking and seat,0,positive
+excellent sound and visuals,0,positive
+the team did a great job,0,positive
+perfect evening at the theater,0,positive
+film correct sans surprise,0,neutral
+experience moyenne mais acceptable,0,neutral
+la salle etait normale,0,neutral
+avis neutre sur la projection,0,neutral
+rien de special dans cette seance,0,neutral
+service standard et correct,0,neutral
+c etait okay pour moi,0,neutral
+je n ai pas d avis fort,0,neutral
+projection moyenne et calme,0,neutral
+qualite globale correcte,0,neutral
+the movie was fine overall,0,neutral
+average experience at the cinema,0,neutral
+it was okay nothing more,0,neutral
+neutral feeling after the session,0,neutral
+the service was normal,0,neutral
+seat was fine and clean,0,neutral
+timing was acceptable,0,neutral
+standard quality no issue,0,neutral
+pas terrible mais pas grave,0,negative
+je suis decu par le film,0,negative
+experience decevante et longue,0,negative
+le son etait faible ce soir,0,negative
+service lent au guichet,0,negative
+organisation faible pendant l entree,0,negative
+mauvais rapport qualite prix,0,negative
+je n ai pas aime cette seance,0,negative
+not satisfied with this movie,0,negative
+bad experience but no insult,0,negative
+the quality was poor tonight,0,negative
+the movie was boring for me,0,negative
+ce film est nul equipe idiot,1,negative
+service de merde vous etes stupide,1,negative
+film de shit organisation debile,1,negative
+ferme ta gueule cinema nul,1,negative
+connard de service experience merde,1,negative
+bande de cons film nul,1,negative
+salope de seance experience horrible,1,negative
+ta gueule votre equipe est nulle,1,negative
+idiot complet ce cinema est nul,1,negative
+stupide organisation je deteste,1,negative
+imbecile service au comptoir,1,negative
+fuck this place stupid staff,1,negative
+this is shit and i hate it,1,negative
+you are idiots and useless,1,negative
+trash cinema with dumb service,1,negative
+hate this team and this movie,1,negative
+what a stupid and bad place,1,negative
+worst service ever idiot manager,1,negative
+degage bande d idiots,1,negative
+votre service est merdique,1,negative
+sale connard au guichet,1,negative
+con de personnel nul,1,negative
+salle pourrie service de merde,1,negative
+film nul et equipe debile,1,negative
+rawabet est nul ta gueule,1,negative

@@ -13,10 +13,14 @@ import org.example.rawabet.cinema.repositories.SalleCinemaRepository;
 import org.example.rawabet.cinema.repositories.SeatRepository;
 import org.example.rawabet.cinema.repositories.SeatRowRepository;
 import org.example.rawabet.cinema.services.interfaces.ISeatService;
+import org.example.rawabet.entities.Seance;
+import org.example.rawabet.repositories.SeanceRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +30,7 @@ public class SeatServiceImpl implements ISeatService {
     private final SalleCinemaRepository salleRepository;
     private final SeatRowRepository seatRowRepository;
     private final SeatRepository seatRepository;
+    private final SeanceRepository seanceRepository;
 
     @Override
     @Transactional
@@ -37,7 +42,6 @@ public class SeatServiceImpl implements ISeatService {
 
         if (request.getRowConfigs() != null && !request.getRowConfigs().isEmpty()) {
 
-            // ── Récupère les rangées existantes indexées par label ──
             Map<String, SeatRow> existingRows = seatRowRepository
                     .findBySalleIdOrderByDisplayOrder(salle.getId())
                     .stream()
@@ -52,21 +56,18 @@ public class SeatServiceImpl implements ISeatService {
 
                 if (existingRows.containsKey(config.getRowLabel())) {
 
-                    // ── Rangée existante : vérifier si modifiée ──
                     SeatRow existingRow = existingRows.get(config.getRowLabel());
                     List<Seat> existingSeats = seatRepository.findByRowIdAndIsActiveTrue(existingRow.getId());
 
-                    // Détecter le type actuel (majoritaire)
                     SeatType currentType = existingSeats.stream()
                             .map(Seat::getSeatType)
                             .findFirst()
                             .orElse(SeatType.STANDARD);
 
                     boolean countChanged = !existingRow.getSeatCount().equals(config.getSeatsPerRow());
-                    boolean typeChanged  = !currentType.equals(newType);
+                    boolean typeChanged = !currentType.equals(newType);
 
                     if (countChanged || typeChanged) {
-                        // Supprimer les sièges existants et recréer
                         seatRepository.deleteAll(existingSeats);
                         existingRow.setSeatCount(config.getSeatsPerRow());
                         existingRow.setDisplayOrder(i + 1);
@@ -78,7 +79,6 @@ public class SeatServiceImpl implements ISeatService {
 
                 } else {
 
-                    // ── Nouvelle rangée ──
                     SeatRow row = new SeatRow();
                     row.setRowLabel(config.getRowLabel());
                     row.setSeatCount(config.getSeatsPerRow());
@@ -91,7 +91,6 @@ public class SeatServiceImpl implements ISeatService {
                 totalCapacity += config.getSeatsPerRow();
             }
 
-            // ── Supprimer les rangées retirées de la config ──
             for (SeatRow removed : existingRows.values()) {
                 seatRepository.deleteAll(seatRepository.findByRowIdAndIsActiveTrue(removed.getId()));
                 seatRowRepository.delete(removed);
@@ -102,7 +101,6 @@ public class SeatServiceImpl implements ISeatService {
 
         } else {
 
-            // ── Ancien mode global (fallback) ──
             for (int i = 0; i < request.getNumberOfRows(); i++) {
                 char rowLetter = (char) ('A' + i);
                 SeatRow row = new SeatRow();
@@ -121,12 +119,10 @@ public class SeatServiceImpl implements ISeatService {
 
     @Override
     public List<SeatRowResponse> getRowsBySalle(Long salleId) {
-
         return seatRowRepository
                 .findBySalleIdOrderByDisplayOrder(salleId)
                 .stream()
                 .map(row -> {
-                    // Récupère le type dominant des sièges de la rangée
                     List<Seat> seats = seatRepository.findByRowIdAndIsActiveTrue(row.getId());
                     SeatType dominant = seats.stream()
                             .map(Seat::getSeatType)
@@ -163,6 +159,22 @@ public class SeatServiceImpl implements ISeatService {
     public List<SeatResponse> getSeatsBySalle(Long salleId) {
         return seatRepository
                 .findByRowSalleId(salleId)
+                .stream()
+                .map(SeatMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<SeatResponse> getSeatResponsesBySeance(Long seanceId) {
+        Seance seance = seanceRepository.findById(seanceId)
+                .orElseThrow(() -> new RuntimeException("Seance not found"));
+
+        if (seance.getSalleCinema() == null) {
+            return List.of();
+        }
+
+        return seatRepository
+                .findByRowSalleIdAndIsActiveTrue(seance.getSalleCinema().getId())
                 .stream()
                 .map(SeatMapper::toResponse)
                 .toList();
