@@ -39,5 +39,7 @@ public class Seat extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "row_id", nullable = false)
     private SeatRow row;
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seance_id")
+    private org.example.rawabet.entities.Seance seance;
 }

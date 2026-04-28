@@ -6,7 +6,15 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "seat_rows")
+@Table(
+        name = "seat_rows",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_seatrow_salle_label",
+                        columnNames = {"salle_id", "rowLabel"}
+                )
+        }
+)
 
 @Getter
 @Setter

@@ -2,6 +2,7 @@ package org.example.rawabet.chat.controllers;
 
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.chat.dto.ChatMessageResponseDTO;
+import org.example.rawabet.chat.dto.MessagePageDTO;
 import org.example.rawabet.chat.services.interfaces.IMessageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +17,31 @@ public class MessageController {
     private final IMessageService messageService;
 
     /**
-     * Historique des messages d'une session (chargement initial).
-     * L'envoi passe exclusivement par WebSocket (/app/chat/{id}/send).
-     * GET /chat/messages/{chatSessionId}
+     * Historique paginé — les plus récents d'abord (DESC), retournés en ASC pour l'affichage.
+     * GET /chat/messages/{chatSessionId}?page=0&size=20
+     *
+     * page=0 → 20 derniers messages (chargement initial)
+     * page=1 → les 20 précédents ("Charger plus")
      */
     @GetMapping("/{chatSessionId}")
-    public ResponseEntity<List<ChatMessageResponseDTO>> getMessages(@PathVariable Long chatSessionId) {
-        return ResponseEntity.ok(messageService.getMessages(chatSessionId));
+    public ResponseEntity<MessagePageDTO> getMessages(
+            @PathVariable Long chatSessionId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        // Sécurité : limiter la taille max à 50 par requête
+        size = Math.min(size, 50);
+        return ResponseEntity.ok(messageService.getMessagesPaged(chatSessionId, page, size));
+    }
+
+    /**
+     * Modération admin — soft delete d'un message (deleted = true).
+     * Le message reste en base mais n'est plus visible côté utilisateur.
+     * DELETE /chat/messages/{messageId}/admin
+     */
+    @DeleteMapping("/{messageId}/admin")
+    public ResponseEntity<Void> adminDeleteMessage(@PathVariable Long messageId) {
+        messageService.adminDeleteMessage(messageId);
+        return ResponseEntity.noContent().build();
     }
 }

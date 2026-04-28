@@ -1,8 +1,8 @@
 package org.example.rawabet.cinema.services.interfaces;
 
-
 import org.example.rawabet.cinema.dto.request.ConfigureHallRequest;
 import org.example.rawabet.cinema.dto.response.SeatResponse;
+import org.example.rawabet.cinema.dto.response.SeatRowResponse;
 
 import java.util.List;
 
@@ -12,6 +12,7 @@ public interface ISeatService {
 
     List<SeatResponse> getSeatsBySalle(Long salleId);
 
-    void disableSeat(Long seatId);
+    List<SeatRowResponse> getRowsBySalle(Long salleId); // ← NOUVEAU
 
+    void disableSeat(Long seatId);
 }

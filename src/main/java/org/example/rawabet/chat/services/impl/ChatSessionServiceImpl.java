@@ -7,10 +7,10 @@ import org.example.rawabet.chat.repositories.ChatSessionRepository;
 import org.example.rawabet.chat.services.interfaces.IChatSessionService;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -18,13 +18,14 @@ public class ChatSessionServiceImpl implements IChatSessionService {
 
     private final ChatSessionRepository chatSessionRepository;
 
-    // Durée de fallback si le film n'a pas de durationMinutes renseigné
     private static final int FALLBACK_DURATION_MINUTES = 120;
+
+    // ✅ BUG 8 CORRIGÉ : SecureRandom au lieu de Random (non prévisible)
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Override
     public ChatSessionResponseDTO createChatSession(Long seanceId, String name, int durationMinutes) {
 
-        // Désactiver l'éventuelle session active existante pour cette séance
         chatSessionRepository.findBySeanceIdAndActiveTrue(seanceId).ifPresent(existing -> {
             existing.setActive(false);
             chatSessionRepository.save(existing);
@@ -104,7 +105,7 @@ public class ChatSessionServiceImpl implements IChatSessionService {
     }
 
     private String generateCode() {
-        int number = new Random().nextInt(9000) + 1000;
+        int number = SECURE_RANDOM.nextInt(9000) + 1000;
         return String.valueOf(number);
     }
 }

@@ -1,6 +1,6 @@
 package org.example.rawabet.cinema.controllers;
 
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.example.rawabet.cinema.dto.request.CreateSalleRequest;
@@ -23,7 +23,7 @@ public class SalleCinemaController {
     @PostMapping
     @PreAuthorize("hasAuthority('CINEMA_UPDATE')")
     public SalleResponse createSalle(
-            @RequestBody CreateSalleRequest request){
+            @Valid @RequestBody CreateSalleRequest request){
 
         return salleService.createSalle(request);
 

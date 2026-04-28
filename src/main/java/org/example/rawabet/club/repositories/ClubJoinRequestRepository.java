@@ -14,4 +14,6 @@ public interface ClubJoinRequestRepository extends JpaRepository<ClubJoinRequest
 
     List<ClubJoinRequest> findByStatus(ClubJoinRequestStatus status);
 
+    // ✅ AJOUT : dernière demande de l'utilisateur (tous statuts confondus)
+    Optional<ClubJoinRequest> findFirstByUserOrderByRequestDateDesc(User user);
 }

@@ -27,8 +27,8 @@ public class AbonnementController {
     // ==================== Abonnement Management ====================
 
     @GetMapping("/all")
-    public List<UserAbonnement> getAll() {
-        return abonnementService.getAllAbonnements();
+    public List<SubscriptionDto> getAll() {
+        return abonnementService.getAllSubscriptions();
     }
 
     // ==================== Subscribe ====================

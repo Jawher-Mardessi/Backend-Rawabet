@@ -1,13 +1,11 @@
 package org.example.rawabet.cinema.mappers;
 
-
 import org.example.rawabet.cinema.dto.response.FilmResponse;
 import org.example.rawabet.cinema.entities.Film;
 
 public class FilmMapper {
 
-    public static FilmResponse toResponse(Film film){
-
+    public static FilmResponse toResponse(Film film) {
         return FilmResponse.builder()
                 .id(film.getId())
                 .title(film.getTitle())
@@ -19,10 +17,13 @@ public class FilmMapper {
                 .rating(film.getRating())
                 .releaseDate(film.getReleaseDate())
                 .posterUrl(film.getPosterUrl())
+                .trailerUrl(film.getTrailerUrl())
                 .averageRating(film.getAverageRating())
                 .totalReviews(film.getTotalReviews())
+                // ── Prédiction ROI ────────────────────────────
+                .profitable(film.getProfitable())
+                .roiConfidence(film.getRoiConfidence())
+                .roiLabel(film.getRoiLabel())
                 .build();
-
     }
-
 }

@@ -1,32 +1,35 @@
 package org.example.rawabet.services;
 
-import org.example.rawabet.dto.ChangePasswordRequest;
-import org.example.rawabet.dto.RegisterRequest;
-import org.example.rawabet.dto.UpdateProfileRequest;
-import org.example.rawabet.dto.UserResponse;
-
-import java.util.List;
+import org.example.rawabet.dto.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface IUserService {
 
-    // 👤 inscription simple (CLIENT)
+    // ── Inscription / Création ─────────────────────────────────────────────
     UserResponse register(RegisterRequest request);
-
-    // 🔐 ADMIN crée user avec rôle
     UserResponse createUserByAdmin(RegisterRequest request);
-
     UserResponse updateUser(Long id, RegisterRequest request);
 
+    // ── CRUD admin ─────────────────────────────────────────────────────────
     void deleteUser(Long id);
-
     UserResponse getUserById(Long id);
+    Page<UserResponse> getAllUsers(Pageable pageable);
 
-    List<UserResponse> getAllUsers();
-
-    // 👤 profil connecté
+    // ── Profil connecté ────────────────────────────────────────────────────
     UserResponse getMyProfile();
     UserResponse updateMyProfile(UpdateProfileRequest request);
+    UserResponse uploadMyAvatar(MultipartFile file);
     void changeMyPassword(ChangePasswordRequest request);
-    void banUser(Long id);
-    void unbanUser(Long id);
+
+    // ── Rôles ─────────────────────────────────────────────────────────────
+    UserResponse updateUserRoles(Long id, UpdateUserRolesRequest request);
+
+    // ── Ban / Unban ────────────────────────────────────────────────────────
+    /** Ban temporaire ou permanent avec durée et raison. */
+    UserResponse banUser(Long id, BanRequest request);
+
+    /** Lève le ban et réactive le compte. */
+    UserResponse unbanUser(Long id);
 }

@@ -61,6 +61,12 @@ public class AbonnementServiceImpl {
         return userAbonnementRepository.findAll();
     }
 
+    public List<SubscriptionDto> getAllSubscriptions() {
+        return userAbonnementRepository.findAll().stream()
+                .map(this::mapToSubscriptionDto)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public void deleteSubscriptionById(Long subscriptionId) {
         UserAbonnement subscription = userAbonnementRepository.findById(subscriptionId)

@@ -1,20 +1,23 @@
 package org.example.rawabet.chat.services.interfaces;
 
-import org.example.rawabet.chat.dto.ChatMessageRequestDTO;
-import org.example.rawabet.chat.dto.ChatMessageResponseDTO;
+import org.example.rawabet.chat.dto.*;
 
 import java.util.List;
 
 public interface IMessageService {
 
-    /**
-     * Envoie un message dans une session de chat active.
-     * Appelé uniquement depuis le ChatWebSocketController.
-     */
     ChatMessageResponseDTO sendMessage(ChatMessageRequestDTO request);
 
-    /**
-     * Récupère l'historique des messages d'une session, triés chronologiquement.
-     */
     List<ChatMessageResponseDTO> getMessages(Long chatSessionId);
+
+    MessagePageDTO getMessagesPaged(Long chatSessionId, int page, int size);
+
+    // Unsend : pour moi ou pour tous
+    UnsendEventDTO unsendMessage(UnsendRequestDTO request, Long userId);
+
+    // Edit : modifie le contenu, broadcast le message mis à jour
+    ChatMessageResponseDTO editMessage(EditRequestDTO request, Long userId);
+
+    // Admin : soft delete d'un message (deleted = true), visible par personne
+    void adminDeleteMessage(Long messageId);
 }

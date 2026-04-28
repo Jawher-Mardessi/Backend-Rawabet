@@ -15,6 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -46,8 +47,11 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
                         if (user != null) {
                             List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                                    .flatMap(role -> role.getPermissions().stream())
-                                    .map(perm -> new SimpleGrantedAuthority(perm.getName()))
+                                    .flatMap(role -> Stream.concat(
+                                            Stream.of(new SimpleGrantedAuthority(role.getName())),
+                                            role.getPermissions().stream()
+                                                    .map(perm -> new SimpleGrantedAuthority(perm.getName()))
+                                    ))
                                     .toList();
 
                             UsernamePasswordAuthenticationToken auth =
