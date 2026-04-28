@@ -143,6 +143,10 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/cinemas/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/films").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/films/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/films").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/films/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/seances").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/seances/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/salles-cinema/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/seats/**").permitAll()
                         .anyRequest().authenticated()
@@ -152,5 +156,6 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
 
 

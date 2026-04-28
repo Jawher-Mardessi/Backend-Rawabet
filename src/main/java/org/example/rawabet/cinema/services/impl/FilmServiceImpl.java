@@ -1,7 +1,6 @@
 package org.example.rawabet.cinema.services.impl;
 
 import lombok.RequiredArgsConstructor;
-
 import org.example.rawabet.cinema.dto.request.CreateFilmRequest;
 import org.example.rawabet.cinema.dto.response.FilmResponse;
 import org.example.rawabet.cinema.entities.Film;
@@ -26,10 +25,10 @@ public class FilmServiceImpl implements IFilmService {
     @Transactional
     public FilmResponse createFilm(CreateFilmRequest request) {
 
-        if (request.getImdbId() != null &&
-                filmRepository.findByImdbId(request.getImdbId()).isPresent()) {
+        if (request.getImdbId() != null
+                && filmRepository.findByImdbId(request.getImdbId()).isPresent()) {
             throw new IllegalArgumentException(
-                    "Un film avec l'imdbId '" + request.getImdbId() + "' existe déjà"
+                    "Un film avec l'imdbId '" + request.getImdbId() + "' existe deja"
             );
         }
 
@@ -51,8 +50,8 @@ public class FilmServiceImpl implements IFilmService {
                 .isActive(true)
                 .build();
 
-        // ── Prédiction fenêtre d'exploitation (non bloquante) ────
-        if (request.getBudget() != null && request.getBudget() > 0
+        if (request.getBudget() != null
+                && request.getBudget() > 0
                 && request.getReleaseDate() != null
                 && request.getDurationMinutes() != null) {
 
@@ -75,10 +74,9 @@ public class FilmServiceImpl implements IFilmService {
             );
 
             if (result != null) {
-                // profitable = true si recommandé pour programmation
                 film.setProfitable(
-                        result.getRecommendationLevel().equals("strong_yes") ||
-                                result.getRecommendationLevel().equals("yes")
+                        "strong_yes".equals(result.getRecommendationLevel())
+                                || "yes".equals(result.getRecommendationLevel())
                 );
                 film.setRoiConfidence(result.getFinalScore());
                 film.setRoiLabel(result.getLabel());
@@ -90,8 +88,12 @@ public class FilmServiceImpl implements IFilmService {
 
     @Override
     public List<FilmResponse> getActiveFilms() {
-        return filmRepository.findByIsActiveTrue()
-                .stream().map(FilmMapper::toResponse).toList();
+        return filmRepository
+                .findAll()
+                .stream()
+                .filter(film -> film.getIsActive() == null || Boolean.TRUE.equals(film.getIsActive()))
+                .map(FilmMapper::toResponse)
+                .toList();
     }
 
     @Override

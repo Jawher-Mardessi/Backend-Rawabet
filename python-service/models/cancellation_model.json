@@ -1,0 +1,98 @@
+{
+  "categories": {
+    "loyalty_level": [
+      "BRONZE",
+      "GOLD",
+      "SILVER"
+    ],
+    "langue": [
+      "AR",
+      "EN",
+      "FR",
+      "VO"
+    ],
+    "film_genre": [
+      "Action",
+      "Animation",
+      "Comedy",
+      "Drama",
+      "Horror",
+      "Romance",
+      "Sci-Fi",
+      "Thriller"
+    ]
+  },
+  "feature_names": [
+    "user_total_bookings",
+    "user_cancelled_bookings",
+    "user_recent_bookings_30d",
+    "loyalty_points",
+    "days_until_seance",
+    "booking_lead_hours",
+    "seance_hour",
+    "seance_weekday",
+    "is_weekend",
+    "prix_base",
+    "seat_number",
+    "is_premium_seat",
+    "loyalty_level::BRONZE",
+    "loyalty_level::GOLD",
+    "loyalty_level::SILVER",
+    "langue::AR",
+    "langue::EN",
+    "langue::FR",
+    "langue::VO",
+    "film_genre::Action",
+    "film_genre::Animation",
+    "film_genre::Comedy",
+    "film_genre::Drama",
+    "film_genre::Horror",
+    "film_genre::Romance",
+    "film_genre::Sci-Fi",
+    "film_genre::Thriller"
+  ],
+  "metadata": {
+    "trainedAt": "2026-04-25T16:43:29Z",
+    "datasetSize": 1480,
+    "featureCount": 27,
+    "accuracy": 0.8547,
+    "auc": 0.8576,
+    "algorithm": "XGBoost",
+    "version": "cancellation-risk-xgboost-v2",
+    "topFeatures": [
+      {
+        "feature": "user_cancelled_bookings",
+        "gain": 14.9998
+      },
+      {
+        "feature": "loyalty_level::GOLD",
+        "gain": 5.8316
+      },
+      {
+        "feature": "user_total_bookings",
+        "gain": 4.3114
+      },
+      {
+        "feature": "film_genre::Thriller",
+        "gain": 3.5692
+      },
+      {
+        "feature": "langue::FR",
+        "gain": 3.027
+      },
+      {
+        "feature": "film_genre::Romance",
+        "gain": 2.7949
+      },
+      {
+        "feature": "langue::VO",
+        "gain": 2.747
+      },
+      {
+        "feature": "film_genre::Sci-Fi",
+        "gain": 2.7392
+      }
+    ]
+  },
+  "booster_file": "cancellation_model.booster.json"
+}
