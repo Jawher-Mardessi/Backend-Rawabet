@@ -74,6 +74,16 @@ public class AdminActivityEvent {
                 .build();
     }
 
+    public static AdminActivityEvent userUnban(String email) {
+        return AdminActivityEvent.builder()
+                .type("user_unban")
+                .message("Compte réactivé")
+                .detail(email)
+                .icon("✅")
+                .color("bg-green-50 border-green-200 text-green-700")
+                .build();
+    }
+
     public static AdminActivityEvent loyaltyUpgrade(String name, String newLevel) {
         return AdminActivityEvent.builder()
                 .type("loyalty_upgrade")

@@ -275,7 +275,9 @@ public class UserServiceImpl implements IUserService {
         user.setBanUntil(null);
         user.setBanReason(null);
         user.setTokenVersion(user.getTokenVersion() + 1);
-        return mapToResponse(userRepository.save(user));
+        UserResponse saved = mapToResponse(userRepository.save(user));
+        activityPublisher.publish(AdminActivityEvent.userUnban(user.getEmail())); // ← AJOUT
+        return saved;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────

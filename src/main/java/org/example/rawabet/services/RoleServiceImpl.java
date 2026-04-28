@@ -1,6 +1,8 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import java.util.Locale;
 import org.example.rawabet.dto.RoleRequest;
 import org.example.rawabet.dto.RoleResponse;
 import org.example.rawabet.entities.Permission;
@@ -18,6 +20,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
+    private final MessageSource messageSource;
 
     // =========================
     // ✅ GET ALL ROLES
@@ -42,11 +45,11 @@ public class RoleServiceImpl implements RoleService {
 
         // ❌ Role already exists
         if (roleRepository.findByName(roleName).isPresent()) {
-            throw new RuntimeException("Role already exists");
+            throw new RuntimeException(messageSource.getMessage("role.already.exists", new Object[]{roleName}, Locale.ENGLISH));
         }
 
         if ("SUPER_ADMIN".equals(roleName)) {
-            throw new RuntimeException("Cannot create SUPER_ADMIN role");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.create.superadmin", null, Locale.ENGLISH));
         }
 
         List<String> permissionNames = request.getPermissions().stream()
@@ -56,7 +59,7 @@ public class RoleServiceImpl implements RoleService {
 
         // 🔐 BLOCK ADMIN_MANAGE
         if (permissionNames.contains("ADMIN_MANAGE")) {
-            throw new RuntimeException("Cannot assign ADMIN_MANAGE permission");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.assign.admin_manage", null, Locale.ENGLISH));
         }
 
         // 🔐 FETCH PERMISSIONS
@@ -64,7 +67,7 @@ public class RoleServiceImpl implements RoleService {
                 permissionRepository.findByNameIn(permissionNames);
 
         if (permissions.size() != permissionNames.size()) {
-            throw new RuntimeException("Some permissions are invalid");
+            throw new RuntimeException(messageSource.getMessage("role.permissions.invalid", null, Locale.ENGLISH));
         }
 
         Role role = new Role();
@@ -83,11 +86,11 @@ public class RoleServiceImpl implements RoleService {
         validateRequest(request);
 
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+            .orElseThrow(() -> new RuntimeException(messageSource.getMessage("role.notfound", new Object[]{id}, Locale.ENGLISH)));
 
         // 🔐 PROTECT SUPER ADMIN
         if (Objects.equals(role.getName(), "SUPER_ADMIN")) {
-            throw new RuntimeException("Cannot modify SUPER_ADMIN role");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.modify.superadmin", null, Locale.ENGLISH));
         }
 
         List<String> permissionNames = request.getPermissions().stream()
@@ -97,14 +100,14 @@ public class RoleServiceImpl implements RoleService {
 
         // 🔐 BLOCK ADMIN_MANAGE
         if (permissionNames.contains("ADMIN_MANAGE")) {
-            throw new RuntimeException("Cannot assign ADMIN_MANAGE permission");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.assign.admin_manage", null, Locale.ENGLISH));
         }
 
         List<Permission> permissions =
                 permissionRepository.findByNameIn(permissionNames);
 
         if (permissions.size() != permissionNames.size()) {
-            throw new RuntimeException("Some permissions are invalid");
+            throw new RuntimeException(messageSource.getMessage("role.permissions.invalid", null, Locale.ENGLISH));
         }
 
         role.setPermissions(permissions);
@@ -119,19 +122,19 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(Long id) {
 
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+            .orElseThrow(() -> new RuntimeException(messageSource.getMessage("role.notfound", new Object[]{id}, Locale.ENGLISH)));
 
         // 🔐 PROTECT SUPER ADMIN
         if (Objects.equals(role.getName(), "SUPER_ADMIN")) {
-            throw new RuntimeException("Cannot delete SUPER_ADMIN");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.delete.superadmin", null, Locale.ENGLISH));
         }
 
         if ("CLIENT".equals(role.getName())) {
-            throw new RuntimeException("Cannot delete CLIENT role");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.delete.client", null, Locale.ENGLISH));
         }
 
         if (role.getUsers() != null && !role.getUsers().isEmpty()) {
-            throw new RuntimeException("Cannot delete a role assigned to existing users");
+            throw new RuntimeException(messageSource.getMessage("role.cannot.delete.assigned", null, Locale.ENGLISH));
         }
 
         roleRepository.delete(role);
@@ -143,15 +146,15 @@ public class RoleServiceImpl implements RoleService {
     private void validateRequest(RoleRequest request) {
 
         if (request == null) {
-            throw new RuntimeException("Request cannot be null");
+            throw new RuntimeException(messageSource.getMessage("role.request.null", null, Locale.ENGLISH));
         }
 
         if (request.getName() == null || request.getName().isBlank()) {
-            throw new RuntimeException("Role name is required");
+            throw new RuntimeException(messageSource.getMessage("role.name.required", null, Locale.ENGLISH));
         }
 
         if (request.getPermissions() == null || request.getPermissions().isEmpty()) {
-            throw new RuntimeException("Permissions list cannot be empty");
+            throw new RuntimeException(messageSource.getMessage("role.permissions.required", null, Locale.ENGLISH));
         }
     }
 

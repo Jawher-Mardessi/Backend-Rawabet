@@ -12,6 +12,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.MessageSource;
+
+import java.util.Locale;
 
 import java.util.List;
 
@@ -22,6 +25,7 @@ public class CarteFideliteController {
 
     private final ICarteFideliteService carteService;
     private final UserRepository        userRepository;
+    private final MessageSource         messageSource;
 
     // ── CLIENT ─────────────────────────────────────────────────────────────
     @GetMapping("/me")
@@ -73,7 +77,7 @@ public class CarteFideliteController {
     @PreAuthorize("hasAuthority('FIDELITY_READ')")
     public String transferPoints(@RequestParam Long toUserId, @RequestParam int points) {
         carteService.transferPoints(toUserId, points);
-        return "✅ " + points + " points transférés avec succès !";
+        return messageSource.getMessage("fidelity.transfer.success", new Object[]{points}, Locale.ENGLISH);
     }
 
     // ── ADMIN ──────────────────────────────────────────────────────────────
@@ -85,7 +89,7 @@ public class CarteFideliteController {
         // addPointsByAdmin(Long userId, ...) résout lui-même le User en interne
         carteService.addPointsByAdmin(userId, points, ActionType.BONUS);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new RuntimeException(messageSource.getMessage("user.notfound", new Object[]{userId}, Locale.ENGLISH)));
         return carteService.getCarteByUser(user);
     }
 
