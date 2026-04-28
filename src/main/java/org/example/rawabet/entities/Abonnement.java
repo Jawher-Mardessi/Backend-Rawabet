@@ -1,15 +1,14 @@
 package org.example.rawabet.entities;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.example.rawabet.enums.AbonnementType;
 
-import java.time.LocalDate;
+import jakarta.persistence.*;
+import lombok.*;
+import org.example.rawabet.enums.AbonnementType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.util.List;
 
 @Entity
-@Getter @Setter @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter @NoArgsConstructor
 public class Abonnement {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,58 +17,29 @@ public class Abonnement {
     @Enumerated(EnumType.STRING)
     private AbonnementType type;
 
-    private java.time.LocalDate dateDebut;
-    private java.time.LocalDate dateFin;
+    private String nom;
+
+    private int nbTicketsParMois; // 2, 5 ou 0
+
+    private boolean illimite;
+
+    private boolean popcornGratuit;
+
     private double prix;
 
-    @OneToOne
-    private User user;
+    @JsonIgnore
+    @OneToMany(mappedBy = "abonnement")
+    private List<UserAbonnement> subscriptions;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
+    // Constructor for initialization (without subscriptions)
+    public Abonnement(Long id, AbonnementType type, String nom, int nbTicketsParMois,
+                      boolean illimite, boolean popcornGratuit, double prix) {
         this.id = id;
-    }
-
-    public AbonnementType getType() {
-        return type;
-    }
-
-    public void setType(AbonnementType type) {
         this.type = type;
-    }
-
-    public LocalDate getDateDebut() {
-        return dateDebut;
-    }
-
-    public void setDateDebut(LocalDate dateDebut) {
-        this.dateDebut = dateDebut;
-    }
-
-    public LocalDate getDateFin() {
-        return dateFin;
-    }
-
-    public void setDateFin(LocalDate dateFin) {
-        this.dateFin = dateFin;
-    }
-
-    public double getPrix() {
-        return prix;
-    }
-
-    public void setPrix(double prix) {
+        this.nom = nom;
+        this.nbTicketsParMois = nbTicketsParMois;
+        this.illimite = illimite;
+        this.popcornGratuit = popcornGratuit;
         this.prix = prix;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 }

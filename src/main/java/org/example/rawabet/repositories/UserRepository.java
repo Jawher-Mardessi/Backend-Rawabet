@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // ── Recherche par email ────────────────────────────────────────────────
     Optional<User> findByEmail(String email);
+    List<User> findDistinctByRoles_Id(Long roleId);
 
     Optional<User> findByEmailIgnoreCase(String email);
 

@@ -16,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -83,8 +84,11 @@ public class JwtFilter extends OncePerRequestFilter {
                     if (!isBanned) {
                         // Construire les authorities depuis les permissions des rôles
                         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                                .flatMap(role -> role.getPermissions().stream())
-                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                .flatMap(role -> Stream.concat(
+                                        Stream.of(new SimpleGrantedAuthority(role.getName())),
+                                        role.getPermissions().stream()
+                                                .map(permission -> new SimpleGrantedAuthority(permission.getName()))
+                                ))
                                 .distinct()
                                 .toList();
 

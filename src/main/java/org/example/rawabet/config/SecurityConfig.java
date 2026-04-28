@@ -103,6 +103,12 @@ public class SecurityConfig {
                         .requestMatchers("/users/*/roles").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/*/ban").hasAuthority("ADMIN_MANAGE")
                         .requestMatchers("/users/*/unban").hasAuthority("ADMIN_MANAGE")
+                        .requestMatchers("/api/abonnements/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/notifications/**").hasAnyAuthority("SUPER_ADMIN", "CLIENT")
+
 
                         // ── CINEMA / EVENT ────────────────────────────────────────
                         .requestMatchers("/cinema/**").hasAuthority("CINEMA_CREATE")
@@ -146,4 +152,5 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
 

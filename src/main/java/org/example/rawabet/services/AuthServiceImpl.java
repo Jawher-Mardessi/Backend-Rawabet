@@ -26,6 +26,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.example.rawabet.entities.EmailVerificationToken;
+import org.example.rawabet.repositories.EmailVerificationTokenRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -91,7 +93,7 @@ public class AuthServiceImpl implements IAuthService {
 
         String token = jwtService.generateToken(user);
         activityPublisher.publish(AdminActivityEvent.userLogin(user.getEmail())); // ← AJOUT
-        return new AuthResponse(token);
+        return new AuthResponse(token, user.getId());
     }
 
     /**
@@ -178,7 +180,7 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         String token = jwtService.generateImpersonationToken(target, admin.getId());
-        return new AuthResponse(token);
+        return new AuthResponse(token, target.getId());
     }
 
     // ────────────────────────────────────────────────────────────────────────

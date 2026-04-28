@@ -157,7 +157,7 @@ public class PasskeyService {
             ceremony.setConsumed(true);
             ceremonyRepository.save(ceremony);
 
-            return new AuthResponse(jwtService.generateToken(user));
+            return new AuthResponse(jwtService.generateToken(user), user.getId());
         } catch (Exception e) {
             throw new RuntimeException("Impossible de finaliser l'authentification passkey", e);
         }

@@ -4,6 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.rawabet.entities.*;
 import org.example.rawabet.enums.Level;
 import org.example.rawabet.repositories.*;
+import org.example.rawabet.entities.Permission;
+import org.example.rawabet.entities.Role;
+import org.example.rawabet.entities.User;
+import org.example.rawabet.repositories.PermissionRepository;
+import org.example.rawabet.repositories.RoleRepository;
+import org.example.rawabet.repositories.UserRepository;
+import org.example.rawabet.services.AbonnementServiceImpl;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,10 +28,12 @@ public class DataInitializer {
     private final UserRepository             userRepository;
     private final CarteFideliteRepository    carteRepository;
     private final BCryptPasswordEncoder      passwordEncoder;
+    private final AbonnementServiceImpl abonnementService;
 
     @Bean
     CommandLineRunner initData() {
         return args -> {
+            abonnementService.initAbonnements();
 
             // ✅ Toujours s'assurer que ADMIN_MANAGE existe
             Permission adminManage = createPermission("ADMIN", "MANAGE");

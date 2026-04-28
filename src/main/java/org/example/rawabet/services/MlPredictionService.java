@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.rawabet.dto.ml.*;
 import org.example.rawabet.entities.*;
+import org.example.rawabet.enums.SubscriptionStatus;
 import org.example.rawabet.repositories.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -122,7 +123,12 @@ public class MlPredictionService {
                 : 30;
 
         // ── Abonnement ────────────────────────────────────────────────────
-        Abonnement abo = user.getAbonnement();
+        Abonnement abo = user.getAbonnements() == null ? null
+                : user.getAbonnements().stream()
+                .filter(userAbonnement -> userAbonnement.getStatus() == SubscriptionStatus.ACTIVE)
+                .map(UserAbonnement::getAbonnement)
+                .findFirst()
+                .orElse(null);
         int hasAbo = abo != null ? 1 : 0;
         int aboType = 0;
         if (abo != null) {

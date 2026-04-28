@@ -134,6 +134,6 @@ public class FaceAuthService {
         activityPublisher.publish(AdminActivityEvent.faceLogin(email)); // ← AJOUT
         log.info("[FaceAuth] Login par visage réussi pour : {}", email);
 
-        return new AuthResponse(jwt);
+        return new AuthResponse(jwt, user.getId());
     }
 }
