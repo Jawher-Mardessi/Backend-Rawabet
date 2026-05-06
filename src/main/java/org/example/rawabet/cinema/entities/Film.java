@@ -54,6 +54,13 @@ public class Film extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    // ── Prédiction ROI ───────────────────────────────────────────
+    private Boolean profitable;
+
+    private Double roiConfidence;
+
+    private String roiLabel;
+
     // Relations de ton ancienne version
     @OneToMany(mappedBy = "film")
     @JsonIgnore
@@ -62,4 +69,5 @@ public class Film extends BaseEntity {
     @OneToMany(mappedBy = "film")
     @JsonIgnore
     private List<Feedback> feedbacks;
+
 }

@@ -6,6 +6,7 @@ import org.example.rawabet.club.dto.ClubRequestDTO;
 import org.example.rawabet.club.dto.ClubResponseDTO;
 import org.example.rawabet.club.services.interfaces.IClubService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,15 +16,17 @@ public class ClubController {
 
     private final IClubService clubService;
 
-    // 📖 Récupérer les infos du club (public)
+    // ✅ Public — tout le monde peut voir les infos du club
     @GetMapping
     public ResponseEntity<ClubResponseDTO> getClub() {
         return ResponseEntity.ok(clubService.getClub());
     }
 
-    // ✏️ Mettre à jour les infos du club (admin)
+    // ✅ FIX : @PreAuthorize ajouté — seul un admin club peut modifier le club
     @PutMapping
-    public ResponseEntity<ClubResponseDTO> updateClub(@Valid @RequestBody ClubRequestDTO request) {
+    @PreAuthorize("hasAuthority('CLUB_MANAGE')")
+    public ResponseEntity<ClubResponseDTO> updateClub(
+            @Valid @RequestBody ClubRequestDTO request) {
         return ResponseEntity.ok(clubService.updateClub(request));
     }
 }

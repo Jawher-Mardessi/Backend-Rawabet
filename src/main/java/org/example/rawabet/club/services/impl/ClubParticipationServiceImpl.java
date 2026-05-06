@@ -92,6 +92,41 @@ public class ClubParticipationServiceImpl implements IClubParticipationService {
 
     @Override
     @Transactional
+    public ClubParticipationResponseDTO updateReservation(Long id, int newPlaces) {
+
+        User user = authService.getAuthenticatedUser();
+
+        ClubParticipation participation = participationRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Reservation not found"));
+
+        if (!participation.getClubMember().getUser().getId().equals(user.getId())) {
+            throw new BusinessException("Not your reservation");
+        }
+
+        if (participation.getStatus() != ClubParticipationStatus.CONFIRMED) {
+            throw new BusinessException("Reservation is not active");
+        }
+
+        ClubEvent event = participation.getClubEvent();
+
+        if (event.getEventDate().isBefore(LocalDateTime.now())) {
+            throw new BusinessException("Event already finished");
+        }
+
+        int diff = newPlaces - participation.getReservedPlaces();
+
+        if (event.getReservedPlaces() + diff > event.getMaxPlaces()) {
+            throw new BusinessException("Not enough places available");
+        }
+
+        event.setReservedPlaces(event.getReservedPlaces() + diff);
+        participation.setReservedPlaces(newPlaces);
+
+        return map(participationRepository.save(participation));
+    }
+
+    @Override
+    @Transactional
     public void cancel(Long id) {
 
         User user = authService.getAuthenticatedUser();
@@ -141,6 +176,7 @@ public class ClubParticipationServiceImpl implements IClubParticipationService {
                 .eventId(participation.getClubEvent().getId())
                 .eventTitle(participation.getClubEvent().getTitle())
                 .reservedPlaces(participation.getReservedPlaces())
+                .remainingPlaces(participation.getClubEvent().getRemainingPlaces())
                 .status(participation.getStatus())
                 .reservationDate(participation.getReservationDate())
                 .build();

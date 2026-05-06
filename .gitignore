@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# AI Model — datasets lourds
+ai model/*.csv
+ai model/__pycache__/
+ai model/*.pyc
+ai model/.ipynb_checkpoints/
+ai model/audience_classifier.pkl
+ai model/roi_classifier_final.pkl
+
+# Anciens notebooks de test
+ai model/ai model test.ipynb

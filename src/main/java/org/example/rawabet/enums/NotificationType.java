@@ -2,6 +2,6 @@ package org.example.rawabet.enums;
 
 public enum NotificationType {
     EMAIL,
-    SMS,
-    PUSH
+    PUSH ,
+    SMS
 }

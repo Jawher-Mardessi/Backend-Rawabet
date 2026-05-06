@@ -71,7 +71,6 @@ public class MessageServiceImpl implements IMessageService {
 
     @Override
     public MessagePageDTO getMessagesPaged(Long chatSessionId, int page, int size) {
-        // Récupérer l'ID de l'utilisateur courant pour filtrer les "hidden"
         Long currentUserId = null;
         try {
             currentUserId = authService.getAuthenticatedUser().getId();
@@ -91,7 +90,7 @@ public class MessageServiceImpl implements IMessageService {
                 .collect(Collectors.toMap(User::getId, u -> u));
 
         List<ChatMessageResponseDTO> messages = messagePage.getContent().stream()
-                .filter(m -> !hiddenIds.contains(m.getId())) // exclure les "pour moi"
+                .filter(m -> !hiddenIds.contains(m.getId()))
                 .sorted(Comparator.comparing(Message::getCreatedAt))
                 .map(m -> toDTO(m, usersById.get(m.getUserId())))
                 .toList();
@@ -117,11 +116,9 @@ public class MessageServiceImpl implements IMessageService {
         }
 
         if (request.isForEveryone()) {
-            // Marquer comme supprimé pour tous — le contenu reste en DB, on le masque dans le DTO
             message.setDeleted(true);
             messageRepository.save(message);
         } else {
-            // Cacher uniquement pour cet utilisateur
             if (!messageHiddenRepository.existsByMessageIdAndUserId(request.getMessageId(), userId)) {
                 messageHiddenRepository.save(MessageHidden.builder()
                         .messageId(request.getMessageId())
@@ -164,18 +161,31 @@ public class MessageServiceImpl implements IMessageService {
         return toDTO(message, user);
     }
 
+    @Override
+    @Transactional
+    public void adminDeleteMessage(Long messageId) {
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message introuvable : " + messageId));
+        message.setDeleted(true);
+        messageRepository.save(message);
+    }
+
     private ChatMessageResponseDTO toDTO(Message message, User user) {
+        // ✅ BUG 2 CORRIGÉ : userId 0 = RawaBot, pas besoin de chercher en base
+        boolean isBot = message.getUserId() != null && message.getUserId() == 0L;
+
         return ChatMessageResponseDTO.builder()
                 .id(message.getId())
                 .chatSessionId(message.getChatSessionId())
                 .userId(message.getUserId())
-                .username(user != null ? user.getNom() : "Utilisateur inconnu")
-                .userEmail(user != null ? user.getEmail() : null)
+                .username(isBot ? "🎬 RawaBot" : (user != null ? user.getNom() : "Utilisateur inconnu"))
+                .userEmail(isBot ? null : (user != null ? user.getEmail() : null))
                 .content(message.isDeleted() ? "" : message.getContent())
                 .createdAt(message.getCreatedAt())
                 .deleted(message.isDeleted())
                 .edited(message.isEdited())
                 .editedAt(message.getEditedAt())
+                .spoiler(message.isSpoiler())
                 .build();
     }
 }

@@ -1,6 +1,8 @@
 package org.example.rawabet.services;
 
 import lombok.RequiredArgsConstructor;
+import org.example.rawabet.cinema.dto.response.FilmResponse;
+import org.example.rawabet.cinema.dto.response.SalleResponse;
 import org.example.rawabet.cinema.entities.Film;
 import org.example.rawabet.cinema.entities.SalleCinema;
 import org.example.rawabet.cinema.repositories.FilmRepository;
@@ -45,7 +47,6 @@ public class SeanceServiceImpl implements ISeanceService {
         seance.setSalleCinema(salleCinema);
         seance = seanceRepository.save(seance);
 
-        // Notifier la création de la séance (écouté par le module chat)
         eventPublisher.publishEvent(new SeanceCreatedEvent(
                 this,
                 seance.getId(),
@@ -78,9 +79,7 @@ public class SeanceServiceImpl implements ISeanceService {
 
     @Override
     public void deleteSeance(Long id) {
-        // Notifier la suppression (écouté par le module chat pour fermer la session)
         eventPublisher.publishEvent(new SeanceDeletedEvent(this, id));
-
         seanceRepository.deleteById(id);
     }
 
@@ -93,20 +92,60 @@ public class SeanceServiceImpl implements ISeanceService {
 
     @Override
     public List<SeanceResponse> getAllSeances() {
-        return seanceRepository.findAll()
+        return seanceRepository.findAllWithFilmAndSalle()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     private SeanceResponse mapToResponse(Seance seance) {
-        return SeanceResponse.builder()
+        SeanceResponse response = SeanceResponse.builder()
                 .id(seance.getId())
-                .dateHeure(seance.getDateHeure().toString())
+                .dateHeure(seance.getDateHeure())
                 .prixBase(seance.getPrixBase())
                 .langue(seance.getLangue())
-                .filmId(seance.getFilm() != null ? seance.getFilm().getId() : null)
-                .salleCinemaId(seance.getSalleCinema() != null ? seance.getSalleCinema().getId() : null)
+                .film(mapToFilmResponse(seance.getFilm()))
+                .salleCinema(mapToSalleResponse(seance.getSalleCinema()))
+                .build();
+
+        if (seance.getFilm() != null) {
+            response.setFilmTitle(seance.getFilm().getTitle());
+        }
+        if (seance.getSalleCinema() != null) {
+            response.setSalleCinemaName(seance.getSalleCinema().getName());
+        }
+
+        return response;
+    }
+
+    private FilmResponse mapToFilmResponse(Film film) {
+        if (film == null) return null;
+        return FilmResponse.builder()
+                .id(film.getId())
+                .title(film.getTitle())
+                .synopsis(film.getSynopsis())
+                .durationMinutes(film.getDurationMinutes())
+                .language(film.getLanguage())
+                .genre(film.getGenre())
+                .director(film.getDirector())
+                .rating(film.getRating())
+                .releaseDate(film.getReleaseDate())
+                .posterUrl(film.getPosterUrl())
+                .averageRating(film.getAverageRating())
+                .totalReviews(film.getTotalReviews())
+                .trailerUrl(film.getTrailerUrl())
+                .build();
+    }
+
+    private SalleResponse mapToSalleResponse(SalleCinema salle) {
+        if (salle == null) return null;
+        return SalleResponse.builder()
+                .id(salle.getId())
+                .name(salle.getName())
+                .hallType(salle.getHallType())
+                .screenType(salle.getScreenType())
+                .totalCapacity(salle.getTotalCapacity())
+                .isActive(salle.getIsActive())
                 .build();
     }
 }

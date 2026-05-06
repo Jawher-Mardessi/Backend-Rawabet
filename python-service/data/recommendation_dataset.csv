@@ -1,0 +1,25 @@
+user_id,film_id,rating,film_title,genre
+1,1,5,Inception,Action
+1,2,4,Interstellar,Sci-Fi
+1,3,3,The Dark Knight,Action
+1,4,5,Tenet,Sci-Fi
+2,1,4,Inception,Action
+2,2,5,Interstellar,Sci-Fi
+2,3,4,The Dark Knight,Action
+2,5,5,Joker,Drame
+2,6,4,1917,Guerre
+3,1,3,Inception,Action
+3,4,4,Tenet,Sci-Fi
+3,5,5,Joker,Drame
+3,6,3,1917,Guerre
+3,7,4,Parasite,Drame
+4,2,5,Interstellar,Sci-Fi
+4,3,4,The Dark Knight,Action
+4,4,3,Tenet,Sci-Fi
+4,8,5,Once Upon a Time in Hollywood,Comédie
+4,9,4,The Irishman,Drame
+5,1,5,Inception,Action
+5,3,5,The Dark Knight,Action
+5,5,4,Joker,Drame
+5,7,5,Parasite,Drame
+5,10,4,Marriage Story,Drame

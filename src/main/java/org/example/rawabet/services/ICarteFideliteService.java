@@ -4,6 +4,8 @@ import org.example.rawabet.dto.*;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.ActionType;
 import org.example.rawabet.enums.RewardType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -19,10 +21,11 @@ public interface ICarteFideliteService {
     void addPoints(User user, int points, ActionType action);
 
     // 👑 ADMIN — ajouter points manuellement
-    void addPointsByAdmin(User user, int points, ActionType action);
+    void addPointsByAdmin(Long userId, int points, ActionType action);
 
-    // 📋 CLIENT — voir son historique
-    List<FidelityHistoryResponse> getMyHistory();
+    // 📋 CLIENT — voir son historique paginé
+    // CORRECTION — Page au lieu de List
+    Page<FidelityHistoryResponse> getMyHistory(Pageable pageable);
 
     LoyaltyDashboardResponse getDashboard();
 
@@ -34,10 +37,11 @@ public interface ICarteFideliteService {
 
     LoyaltyAdminOverviewResponse getAdminOverview();
 
-    // 🏆 ADMIN — top 10 clients
+    // 🏆 ADMIN — top clients
     List<TopClientResponse> getTopClients();
     List<TopClientResponse> getTopClients(int limit);
 
-    void transferPoints(Long toUserId, int points);
+    List<TransferRecipientResponse> searchTransferRecipients(String query);
 
+    void transferPoints(Long toUserId, int points);
 }

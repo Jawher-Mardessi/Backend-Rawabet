@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationCinemaServiceImpl implements IReservationCinemaService {
@@ -53,8 +54,11 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
     }
 
     @Override
-    public List<ReservationCinema> getAllReservations() {
-        return reservationRepository.findAll();
+    public List<ReservationCinemaResponse> getAllReservations() {
+        return reservationRepository.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -66,7 +70,14 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
         Seance seance = seanceRepository.findById(request.getSeanceId())
                 .orElseThrow(() -> new RuntimeException("Seance not found"));
 
-        Seat seat = seatRepository.findBySeatNumberAndSeanceId(request.getSeatNumero(), request.getSeanceId())
+        if (seance.getSalleCinema() == null) {
+            throw new RuntimeException("Salle not found for seance");
+        }
+
+        Seat seat = seatRepository.findBySeatNumberAndRowSalleIdAndIsActiveTrue(
+                        request.getSeatNumero(),
+                        seance.getSalleCinema().getId()
+                )
                 .orElseThrow(() -> new RuntimeException("Seat not found for numero: " + request.getSeatNumero()));
 
         boolean alreadyReserved = reservationRepository
@@ -85,13 +96,22 @@ public class ReservationCinemaServiceImpl implements IReservationCinemaService {
 
         reservation = reservationRepository.save(reservation);
 
+        return mapToResponse(reservation);
+    }
+
+    private ReservationCinemaResponse mapToResponse(ReservationCinema reservation) {
         return ReservationCinemaResponse.builder()
                 .id(reservation.getId())
-                .dateReservation(reservation.getDateReservation().toString())
-                .statut(reservation.getStatut().name())
-                .userId(user.getId())
-                .seanceId(seance.getId())
-                .seatId(seat.getId())
+                .dateReservation(reservation.getDateReservation() != null ?
+                        reservation.getDateReservation().toString() : LocalDate.now().toString())
+                .statut(reservation.getStatut() != null ?
+                        reservation.getStatut().name() : "PENDING")
+                .userId(reservation.getUser() != null ?
+                        reservation.getUser().getId() : null)
+                .seanceId(reservation.getSeance() != null ?
+                        reservation.getSeance().getId() : null)
+                .seatId(reservation.getSeat() != null ?
+                        reservation.getSeat().getId() : null)
                 .build();
     }
 }

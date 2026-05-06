@@ -15,4 +15,5 @@ public interface ISeatService {
     List<SeatRowResponse> getRowsBySalle(Long salleId); // ← NOUVEAU
 
     void disableSeat(Long seatId);
+    List<SeatResponse> getSeatResponsesBySeance(Long seanceId);
 }

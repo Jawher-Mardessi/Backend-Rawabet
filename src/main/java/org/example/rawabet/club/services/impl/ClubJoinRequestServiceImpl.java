@@ -5,6 +5,7 @@ import org.example.rawabet.club.dto.ClubJoinRequestDTO;
 import org.example.rawabet.club.dto.ClubJoinResponseDTO;
 import org.example.rawabet.club.entities.ClubJoinRequest;
 import org.example.rawabet.club.enums.ClubJoinRequestStatus;
+import org.example.rawabet.club.enums.ClubMemberStatus;
 import org.example.rawabet.club.exceptions.BusinessException;
 import org.example.rawabet.club.exceptions.NotFoundException;
 import org.example.rawabet.club.repositories.ClubJoinRequestRepository;
@@ -29,10 +30,12 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
 
     @Override
     public ClubJoinResponseDTO submitRequest(ClubJoinRequestDTO dto) {
-
         User user = authService.getAuthenticatedUser();
 
-        if (clubMemberService.getMember(user.getId()) != null) {
+        // ✅ FIX : un membre REMOVED peut re-postuler (comme un LEFT)
+        // On ne bloque que les membres ACTIVE
+        var existingMember = clubMemberService.getMember(user.getId());
+        if (existingMember != null && existingMember.getStatus() == ClubMemberStatus.ACTIVE) {
             throw new BusinessException("Already a club member");
         }
 
@@ -55,7 +58,6 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
     @Override
     @Transactional
     public ClubJoinResponseDTO approve(Long id) {
-
         ClubJoinRequest request = joinRequestRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Request not found"));
 
@@ -74,7 +76,6 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
     @Override
     @Transactional
     public ClubJoinResponseDTO reject(Long id) {
-
         ClubJoinRequest request = joinRequestRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Request not found"));
 
@@ -97,7 +98,6 @@ public class ClubJoinRequestServiceImpl implements IClubJoinRequestService {
                 .toList();
     }
 
-    // ✅ AJOUT : dernière demande de l'utilisateur connecté (tous statuts)
     @Override
     public Optional<ClubJoinResponseDTO> getMyRequest() {
         User user = authService.getAuthenticatedUser();

@@ -8,9 +8,7 @@ import org.example.rawabet.repositories.UserRepository;
 import org.example.rawabet.services.IReservationCinemaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +21,7 @@ public class ReservationCinemaController {
     @Autowired
     private IReservationCinemaService service;
     @Autowired
-    private UserRepository userRepository; // ← doit être ici, au niveau de la classe
+    private UserRepository userRepository;
 
     @PostMapping("/add")
     public ReservationCinema add(@RequestBody ReservationCinema r) {
@@ -46,7 +44,7 @@ public class ReservationCinemaController {
     }
 
     @GetMapping("/all")
-    public List<ReservationCinema> getAll() {
+    public List<ReservationCinemaResponse> getAll() {
         return service.getAllReservations();
     }
 

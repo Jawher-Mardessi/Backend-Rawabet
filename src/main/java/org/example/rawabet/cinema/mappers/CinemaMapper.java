@@ -6,8 +6,7 @@ import org.example.rawabet.cinema.entities.Cinema;
 
 public class CinemaMapper {
 
-    public static CinemaResponse toResponse(Cinema cinema){
-
+    public static CinemaResponse toResponse(Cinema cinema) {
         return CinemaResponse.builder()
                 .id(cinema.getId())
                 .name(cinema.getName())
@@ -18,8 +17,10 @@ public class CinemaMapper {
                 .phone(cinema.getPhone())
                 .email(cinema.getEmail())
                 .isActive(cinema.getIsActive())
+                .latitude(cinema.getLatitude())
+                .longitude(cinema.getLongitude())
+                .timezone(cinema.getTimezone())
                 .build();
-
     }
 
 }

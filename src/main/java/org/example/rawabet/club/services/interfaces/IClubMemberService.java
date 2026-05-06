@@ -13,4 +13,7 @@ public interface IClubMemberService {
     ClubMemberResponseDTO getMember(Long userId);
 
     List<ClubMemberResponseDTO> getAllMembers();
+
+    // ✅ AJOUTÉ — expulsion par admin
+    ClubMemberResponseDTO removeMember(Long memberId, String reason);
 }

@@ -37,4 +37,8 @@ public class CreateFilmRequest {
 
     private String imdbId;
 
+    // ── Champs pour la prédiction ROI ────────────────────────────
+    private Double budget;
+
+    private Double popularity;
 }

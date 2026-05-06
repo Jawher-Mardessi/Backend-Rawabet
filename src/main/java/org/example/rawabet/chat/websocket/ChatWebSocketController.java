@@ -3,8 +3,11 @@ package org.example.rawabet.chat.websocket;
 import lombok.RequiredArgsConstructor;
 import org.example.rawabet.chat.dto.*;
 import org.example.rawabet.chat.entities.ChatSession;
+import org.example.rawabet.chat.entities.Message;
 import org.example.rawabet.chat.repositories.ChatSessionRepository;
+import org.example.rawabet.chat.repositories.MessageRepository;
 import org.example.rawabet.chat.services.impl.RawaBotService;
+import org.example.rawabet.chat.services.impl.SpoilerDetectionServiceImpl;
 import org.example.rawabet.chat.services.interfaces.IMessageService;
 import org.example.rawabet.chat.services.interfaces.IReactionService;
 import org.example.rawabet.entities.User;
@@ -19,6 +22,9 @@ import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 @RequiredArgsConstructor
@@ -27,8 +33,19 @@ public class ChatWebSocketController {
     private final IMessageService messageService;
     private final IReactionService reactionService;
     private final RawaBotService rawaBotService;
+    private final SpoilerDetectionServiceImpl spoilerDetectionService;
     private final ChatSessionRepository chatSessionRepository;
+    private final MessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+
+    // ✅ ID réservé pour RawaBot en base
+    private static final Long BOT_USER_ID = 0L;
+    private static final String BOT_USERNAME = "🎬 RawaBot";
+
+    // ✅ Regex : détecte @rawabot n'importe où dans le message (insensible à la casse)
+    private static final Pattern BOT_MENTION = Pattern.compile(
+            "@rawabot\\s+(.+)", Pattern.CASE_INSENSITIVE | Pattern.DOTALL
+    );
 
     @MessageMapping("/chat/{chatSessionId}/send")
     @SendTo("/topic/chat/{chatSessionId}")
@@ -42,13 +59,29 @@ public class ChatWebSocketController {
         try {
             request.setChatSessionId(chatSessionId);
             ChatMessageResponseDTO userMessage = messageService.sendMessage(request);
-
-            // Détecter la mention @rawabot
             String content = request.getContent().trim();
-            if (content.toLowerCase().startsWith("@rawabot")) {
-                String question = content.substring(10).trim(); // retirer "@rawabot"
+            Long messageId = userMessage.getId();
+
+            // ✅ Détection spoiler ASYNCHRONE — ne bloque pas le chat
+            new Thread(() -> {
+                try {
+                    boolean spoiler = spoilerDetectionService.isSpoiler(content, messageId);
+                    if (spoiler) {
+                        messagingTemplate.convertAndSend(
+                                "/topic/chat/" + chatSessionId + "/spoiler",
+                                Map.of("messageId", messageId, "isSpoiler", true)
+                        );
+                    }
+                } catch (Exception e) {
+                    System.err.println("[Spoiler] Erreur : " + e.getMessage());
+                }
+            }).start();
+
+            // ✅ BUG 1 CORRIGÉ : détecte @rawabot n'importe où dans le message
+            Matcher matcher = BOT_MENTION.matcher(content);
+            if (matcher.find()) {
+                String question = matcher.group(1).trim();
                 if (!question.isEmpty()) {
-                    // Appel asynchrone pour ne pas bloquer la réponse utilisateur
                     new Thread(() -> {
                         try {
                             ChatSession session = chatSessionRepository.findById(chatSessionId).orElse(null);
@@ -58,24 +91,35 @@ public class ChatWebSocketController {
 
                             String botResponse = rawaBotService.ask(filmName, question);
 
-                            ChatMessageResponseDTO botMessage = ChatMessageResponseDTO.builder()
-                                    .id(-System.currentTimeMillis()) // ID unique négatif pour le bot
+                            // ✅ BUG 1 CORRIGÉ : on sauvegarde le message bot en base
+                            Message botEntity = Message.builder()
                                     .chatSessionId(chatSessionId)
-                                    .userId(0L)
-                                    .username("🎬 RawaBot")
+                                    .userId(BOT_USER_ID)
                                     .content(botResponse)
-                                    .createdAt(LocalDateTime.now())
                                     .deleted(false)
                                     .edited(false)
+                                    .spoiler(false)
+                                    .build();
+                            Message savedBot = messageRepository.save(botEntity);
+
+                            ChatMessageResponseDTO botMessage = ChatMessageResponseDTO.builder()
+                                    .id(savedBot.getId())
+                                    .chatSessionId(chatSessionId)
+                                    .userId(BOT_USER_ID)
+                                    .username(BOT_USERNAME)
+                                    .content(botResponse)
+                                    .createdAt(savedBot.getCreatedAt())
+                                    .deleted(false)
+                                    .edited(false)
+                                    .spoiler(false)
                                     .build();
 
-                            // Broadcaster la réponse du bot à tous
                             messagingTemplate.convertAndSend(
                                     "/topic/chat/" + chatSessionId,
                                     botMessage
                             );
                         } catch (Exception e) {
-                            System.err.println("[CinephileBot] Erreur thread : " + e.getMessage());
+                            System.err.println("[RawaBot] Erreur thread : " + e.getMessage());
                         }
                     }).start();
                 }

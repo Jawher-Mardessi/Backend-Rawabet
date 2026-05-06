@@ -22,6 +22,10 @@ public class RawaBotService {
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     public String ask(String filmName, String question) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return "Le bot IA est indisponible (clé API non configurée).";
+        }
+
         try {
             String prompt = String.format(
                     "Tu es Cinéphile, un assistant expert en cinéma intégré dans l'application Rawebet. " +
