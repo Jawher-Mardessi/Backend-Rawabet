@@ -14,9 +14,9 @@ public class Materiel {
     private String nom;
     private String description;
     private String reference;
-    private int quantiteDisponible;
+    private int quantiteTotale;
     private double prixUnitaire;
-    private boolean disponible;
+
 
     @Enumerated(EnumType.STRING)
     private MaterielStatus status;    // ✅ ACTIVE, MAINTENANCE, DAMAGED
@@ -36,7 +36,7 @@ public class Materiel {
     public Materiel() {}
 
     public Materiel(Long id, String nom, String description, String reference,
-                    int quantiteDisponible, double prixUnitaire, boolean disponible,
+                    int quantiteTotale, double prixUnitaire,
                     MaterielStatus status, CategorieMateriel categorie,
                     List<EvenementMateriel> evenementMateriels,
                     List<ReservationMateriel> reservations) {
@@ -44,9 +44,8 @@ public class Materiel {
         this.nom = nom;
         this.description = description;
         this.reference = reference;
-        this.quantiteDisponible = quantiteDisponible;
+        this.quantiteTotale = quantiteTotale;
         this.prixUnitaire = prixUnitaire;
-        this.disponible = disponible;
         this.status = status;
         this.categorie = categorie;
         this.evenementMateriels = evenementMateriels;
@@ -65,14 +64,11 @@ public class Materiel {
     public String getReference() { return reference; }
     public void setReference(String reference) { this.reference = reference; }
 
-    public int getQuantiteDisponible() { return quantiteDisponible; }
-    public void setQuantiteDisponible(int quantiteDisponible) { this.quantiteDisponible = quantiteDisponible; }
+    public int getQuantiteTotale() { return quantiteTotale; }
+    public void setQuantiteTotale(int quantiteTotale) { this.quantiteTotale = quantiteTotale; }
 
     public double getPrixUnitaire() { return prixUnitaire; }
     public void setPrixUnitaire(double prixUnitaire) { this.prixUnitaire = prixUnitaire; }
-
-    public boolean isDisponible() { return disponible; }
-    public void setDisponible(boolean disponible) { this.disponible = disponible; }
 
     public MaterielStatus getStatus() { return status; }
     public void setStatus(MaterielStatus status) { this.status = status; }

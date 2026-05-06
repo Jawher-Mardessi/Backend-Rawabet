@@ -1,14 +1,13 @@
 package org.example.rawabet.controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
-import org.example.rawabet.dto.EvenementMaterielRequestDTO;
-import org.example.rawabet.dto.EvenementRequestDTO;
-import org.example.rawabet.dto.EvenementMaterielResponseDTO;
-import org.example.rawabet.dto.EvenementResponseDTO;
+import org.example.rawabet.dto.*;
 import org.example.rawabet.entities.Evenement;
 import org.example.rawabet.entities.EvenementMateriel;
 import org.example.rawabet.entities.SalleEvenement;
 import org.example.rawabet.enums.EvenementStatus;
+import org.example.rawabet.services.IEvenementMaterielService;
 import org.example.rawabet.services.IEvenementService;
 import org.example.rawabet.services.ISalleEvenementService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/evenements")
 public class EvenementController {
-
+    @Autowired
+    private IEvenementMaterielService evenementMaterielService;
     @Autowired
     private IEvenementService evenementService;
 
@@ -40,6 +40,9 @@ public class EvenementController {
         e.setDateDebut(dto.getDateDebut());
         e.setDateFin(dto.getDateFin());
         e.setNombreDePlaces(dto.getNombreDePlaces());
+        e.setStatus(dto.getStatus());  // ✅ FIX: Was missing, now added
+        e.setCategorie(dto.getCategorie());
+        e.setPrixUnitaire(dto.getPrixUnitaire());
         if (dto.getSalleId() != null) {
             SalleEvenement salle = salleService.getSalleById(dto.getSalleId());
             e.setSalle(salle);
@@ -57,6 +60,8 @@ public class EvenementController {
         dto.setNombreDePlaces(e.getNombreDePlaces());
         dto.setPlacesRestantes(evenementService.getRemainingPlaces(e.getId()));
         dto.setStatus(e.getStatus());
+        dto.setCategorie(e.getCategorie());
+        dto.setPrixUnitaire(e.getPrixUnitaire());
         if (e.getSalle() != null) {
             dto.setSalleId(e.getSalle().getId());
             dto.setSalleNom(e.getSalle().getNom());
@@ -148,6 +153,15 @@ public class EvenementController {
         return ResponseEntity.ok(result);
     }
 
+    @PutMapping("/materiels/{evenementMaterielId}/quantite")
+    public ResponseEntity<EvenementMaterielResponseDTO> updateMaterielQuantite(
+            @PathVariable Long evenementMaterielId,
+            @Valid @RequestBody UpdateEvenementMaterielRequestDTO dto) {
+        EvenementMateriel updated = evenementMaterielService
+                .updateQuantite(evenementMaterielId, dto.getQuantite());
+        return ResponseEntity.ok(toEvenementMaterielResponse(updated));
+    }
+
     // ── Availability ─────────────────────────────────────────────
 
     @GetMapping("/{id}/places-restantes")
@@ -185,11 +199,20 @@ public class EvenementController {
                 .stream().map(this::toResponse).collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<EvenementResponseDTO>> getByStatus(@PathVariable EvenementStatus status) {
+        return ResponseEntity.ok(evenementService.getEvenementsByStatus(status)
+                .stream().map(this::toResponse).collect(Collectors.toList()));
+    }
+
     @PatchMapping("/{id}/status")
     public ResponseEntity<EvenementResponseDTO> updateStatus(
             @PathVariable Long id, @RequestParam EvenementStatus status) {
         return ResponseEntity.ok(toResponse(evenementService.updateStatus(id, status)));
     }
+
+    // ── Search ───────────────────────────────────────
 
     @GetMapping("/search")
     public ResponseEntity<List<EvenementResponseDTO>> search(@RequestParam String keyword) {
@@ -197,11 +220,7 @@ public class EvenementController {
                 .stream().map(this::toResponse).collect(Collectors.toList()));
     }
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<EvenementResponseDTO>> getByStatus(@PathVariable EvenementStatus status) {
-        return ResponseEntity.ok(evenementService.getEvenementsByStatus(status)
-                .stream().map(this::toResponse).collect(Collectors.toList()));
-    }
+    // ── Waitlist ─────────────────────────────────────
 
     @GetMapping("/{id}/waitlist-count")
     public ResponseEntity<Integer> getWaitlistCount(@PathVariable Long id) {

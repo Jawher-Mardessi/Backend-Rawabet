@@ -2,7 +2,9 @@ package org.example.rawabet.dto;
 
 import jakarta.validation.constraints.*;
 import org.example.rawabet.enums.EvenementStatus;
+import org.example.rawabet.enums.TypeCategorie;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public class EvenementRequestDTO {
 
@@ -26,6 +28,15 @@ public class EvenementRequestDTO {
 
     private EvenementStatus status;
 
+    @NotNull(message = "La catégorie est obligatoire")
+    private TypeCategorie categorie;
+
+    @NotNull(message = "Le prix unitaire est obligatoire")
+    @DecimalMin(value = "0.0", inclusive = false, message = "Le prix doit être supérieur à 0")
+    private BigDecimal prixUnitaire;
+
+    private BigDecimal prixReduit;
+
     public EvenementRequestDTO() {}
 
     public String getTitre() { return titre; }
@@ -48,4 +59,12 @@ public class EvenementRequestDTO {
 
     public EvenementStatus getStatus() { return status; }
     public void setStatus(EvenementStatus status) { this.status = status; }
+
+    public TypeCategorie getCategorie() { return categorie; }
+    public void setCategorie(TypeCategorie categorie) { this.categorie = categorie; }
+
+    public BigDecimal getPrixUnitaire() { return prixUnitaire; }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+
+
 }

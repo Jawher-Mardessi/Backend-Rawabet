@@ -2,6 +2,7 @@ package org.example.rawabet.entities;
 
 import jakarta.persistence.*;
 import org.example.rawabet.enums.ReservationStatus;
+import org.example.rawabet.enums.ReservationEvenementAttribut;
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,9 +13,13 @@ public class ReservationEvenement {
 
     private LocalDateTime dateReservation;
     private LocalDateTime dateExpiration;   // ✅ auto-cancel if pending after this
+    private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     private ReservationStatus statut;
+
+    @Enumerated(EnumType.STRING)
+    private ReservationEvenementAttribut attribut;
 
     private boolean enAttente;             // ✅ true = on waitlist
 
@@ -34,16 +39,26 @@ public class ReservationEvenement {
 
     public ReservationEvenement(Long id, LocalDateTime dateReservation,
                                 LocalDateTime dateExpiration, ReservationStatus statut,
-                                boolean enAttente, User user, Evenement evenement,
+                                ReservationEvenementAttribut attribut,
+                                String phoneNumber, boolean enAttente, User user, Evenement evenement,
                                 Paiement paiement) {
         this.id = id;
         this.dateReservation = dateReservation;
         this.dateExpiration = dateExpiration;
         this.statut = statut;
+        this.attribut = attribut;
+        this.phoneNumber = phoneNumber;
         this.enAttente = enAttente;
         this.user = user;
         this.evenement = evenement;
         this.paiement = paiement;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (attribut == null) {
+            attribut = ReservationEvenementAttribut.CONFIRMED;
+        }
     }
 
     public Long getId() { return id; }
@@ -57,6 +72,12 @@ public class ReservationEvenement {
 
     public ReservationStatus getStatut() { return statut; }
     public void setStatut(ReservationStatus statut) { this.statut = statut; }
+
+    public ReservationEvenementAttribut getAttribut() { return attribut; }
+    public void setAttribut(ReservationEvenementAttribut attribut) { this.attribut = attribut; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     public boolean isEnAttente() { return enAttente; }
     public void setEnAttente(boolean enAttente) { this.enAttente = enAttente; }

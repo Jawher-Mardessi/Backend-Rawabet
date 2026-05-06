@@ -10,7 +10,7 @@ public class ReservationMateriel {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int quantite;
+    private int quantiteReservee;
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
 
@@ -27,11 +27,11 @@ public class ReservationMateriel {
 
     public ReservationMateriel() {}
 
-    public ReservationMateriel(Long id, int quantite, LocalDateTime dateDebut,
+    public ReservationMateriel(Long id, int quantiteReservee, LocalDateTime dateDebut,
                                LocalDateTime dateFin, ReservationStatus statut,
                                User user, Materiel materiel) {
         this.id = id;
-        this.quantite = quantite;
+        this.quantiteReservee = quantiteReservee;
         this.dateDebut = dateDebut;
         this.dateFin = dateFin;
         this.statut = statut;
@@ -42,8 +42,8 @@ public class ReservationMateriel {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public int getQuantite() { return quantite; }
-    public void setQuantite(int quantite) { this.quantite = quantite; }
+    public int getQuantiteReservee() { return quantiteReservee; }
+    public void setQuantiteReservee(int quantiteReservee) { this.quantiteReservee = quantiteReservee; }
 
     public LocalDateTime getDateDebut() { return dateDebut; }
     public void setDateDebut(LocalDateTime dateDebut) { this.dateDebut = dateDebut; }

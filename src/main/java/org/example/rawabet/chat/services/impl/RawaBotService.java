@@ -15,7 +15,7 @@ import java.net.http.HttpResponse;
 @RequiredArgsConstructor
 public class RawaBotService {
 
-    @Value("${anthropic.api.key}")
+    @Value("${anthropic.api.key:}")
     private String apiKey;
 
     private final ObjectMapper objectMapper = new ObjectMapper();

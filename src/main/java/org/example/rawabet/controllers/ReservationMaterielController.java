@@ -28,7 +28,7 @@ public class ReservationMaterielController {
     private ReservationMaterielResponseDTO toResponse(ReservationMateriel r) {
         ReservationMaterielResponseDTO dto = new ReservationMaterielResponseDTO();
         dto.setId(r.getId());
-        dto.setQuantite(r.getQuantite());
+        dto.setQuantite(r.getQuantiteReservee());
         dto.setDateDebut(r.getDateDebut());
         dto.setDateFin(r.getDateFin());
         dto.setStatut(r.getStatut());

@@ -3,6 +3,7 @@ package org.example.rawabet.services;
 import org.example.rawabet.entities.Evenement;
 import org.example.rawabet.entities.EvenementMateriel;
 import org.example.rawabet.entities.Materiel;
+import org.example.rawabet.enums.MaterielStatus;
 import org.example.rawabet.repositories.EvenementMaterielRepository;
 import org.example.rawabet.repositories.EvenementRepository;
 import org.example.rawabet.repositories.MaterielRepository;
@@ -23,6 +24,9 @@ public class EvenementMaterielService implements IEvenementMaterielService {
     @Autowired
     private MaterielRepository materielRepository;
 
+    @Autowired
+    private IAvailabilityService availabilityService;
+
     @Override
     public EvenementMateriel assignerMateriel(Long evenementId, Long materielId, int quantite) {
         Evenement evenement = evenementRepository.findById(evenementId)
@@ -31,11 +35,14 @@ public class EvenementMaterielService implements IEvenementMaterielService {
         Materiel materiel = materielRepository.findById(materielId)
                 .orElseThrow(() -> new RuntimeException("Matériel introuvable avec l'id: " + materielId));
 
-        if (!materiel.isDisponible())
+        if (materiel.getStatus() != MaterielStatus.ACTIVE)
             throw new RuntimeException("Le matériel n'est pas disponible");
 
-        if (materiel.getQuantiteDisponible() < quantite)
-            throw new RuntimeException("Stock insuffisant. Disponible: " + materiel.getQuantiteDisponible());
+        int available = availabilityService.getAvailableQuantity(
+                materielId, evenement.getDateDebut(), evenement.getDateFin());
+
+        if (available < quantite)
+            throw new RuntimeException("Stock insuffisant. Disponible: " + available);
 
         EvenementMateriel em = new EvenementMateriel();
         em.setEvenement(evenement);
@@ -48,15 +55,28 @@ public class EvenementMaterielService implements IEvenementMaterielService {
     @Override
     public EvenementMateriel updateQuantite(Long evenementMaterielId, int nouvelleQuantite) {
         EvenementMateriel em = evenementMaterielRepository.findById(evenementMaterielId)
-                .orElseThrow(() -> new RuntimeException("Assignment introuvable avec l'id: " + evenementMaterielId));
+                .orElseThrow(() -> new RuntimeException(
+                        "Assignment introuvable avec l'id: " + evenementMaterielId));
 
-        if (em.getMateriel().getQuantiteDisponible() < nouvelleQuantite)
-            throw new RuntimeException("Stock insuffisant. Disponible: " + em.getMateriel().getQuantiteDisponible());
+        if (nouvelleQuantite <= 0)
+            throw new RuntimeException("La quantité doit être supérieure à 0");
+
+        Materiel materiel = em.getMateriel();
+        Evenement evenement = em.getEvenement();
+
+        // Use the centralized availability service
+        int available = availabilityService.getAvailableQuantity(
+                materiel.getId(),
+                evenement.getDateDebut(),
+                evenement.getDateFin());
+
+        if (available < nouvelleQuantite)
+            throw new RuntimeException(
+                    "Stock insuffisant pour cette période. Disponible: " + available);
 
         em.setQuantite(nouvelleQuantite);
         return evenementMaterielRepository.save(em);
     }
-
     @Override
     public void retirerMateriel(Long evenementMaterielId) {
         if (!evenementMaterielRepository.existsById(evenementMaterielId))

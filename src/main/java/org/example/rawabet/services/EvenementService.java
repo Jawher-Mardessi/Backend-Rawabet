@@ -5,6 +5,7 @@ import org.example.rawabet.entities.EvenementMateriel;
 import org.example.rawabet.entities.Materiel;
 import org.example.rawabet.entities.SalleEvenement;
 import org.example.rawabet.enums.EvenementStatus;
+import org.example.rawabet.enums.MaterielStatus;
 import org.example.rawabet.enums.SalleStatus;
 import org.example.rawabet.repositories.*;
 import org.example.rawabet.services.IEvenementService;
@@ -20,6 +21,7 @@ public class EvenementService implements IEvenementService {
     @Autowired private SalleEvenementRepository salleRepository;
     @Autowired private MaterielRepository materielRepository;
     @Autowired private EvenementMaterielRepository evenementMaterielRepository;
+    @Autowired private IAvailabilityService availabilityService;
 
     @Override
     public Evenement addEvenement(Evenement evenement) {
@@ -85,14 +87,11 @@ public class EvenementService implements IEvenementService {
         Evenement evenement = getEvenementById(evenementId);
         Materiel materiel = materielRepository.findById(materielId)
                 .orElseThrow(() -> new RuntimeException("Matériel introuvable avec l'id: " + materielId));
-        if (!materiel.isDisponible())
+        if (materiel.getStatus() != MaterielStatus.ACTIVE)
             throw new RuntimeException("Le matériel n'est pas disponible");
         // ✅ Check stock accounting for both reservations and other event assignments
-        int reservedByReservations = materielRepository.getTotalReservedByReservation(
+        int available = availabilityService.getAvailableQuantity(
                 materielId, evenement.getDateDebut(), evenement.getDateFin());
-        int assignedToEvents = materielRepository.getTotalAssignedByEvenement(
-                materielId, evenement.getDateDebut(), evenement.getDateFin());
-        int available = materiel.getQuantiteDisponible() - reservedByReservations - assignedToEvents;
         if (available < quantite)
             throw new RuntimeException("Stock insuffisant pour cette période. Disponible: " + available);
         EvenementMateriel em = new EvenementMateriel();
