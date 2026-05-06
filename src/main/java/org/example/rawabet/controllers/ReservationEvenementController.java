@@ -27,9 +27,11 @@ public class ReservationEvenementController {
         ReservationEvenementResponseDTO dto = new ReservationEvenementResponseDTO();
         dto.setId(r.getId());
         dto.setDateReservation(r.getDateReservation());
-        dto.setDateExpiration(r.getDateExpiration());   // ✅ add this
+        dto.setDateExpiration(r.getDateExpiration());
+        dto.setPhoneNumber(r.getPhoneNumber());
         dto.setStatut(r.getStatut());
-        dto.setEnAttente(r.isEnAttente());              // ✅ add this
+        dto.setAttribut(r.getAttribut());
+        dto.setEnAttente(r.isEnAttente());
         dto.setUserId(r.getUser().getId());
         dto.setUserNom(r.getUser().getNom());
         dto.setEvenementId(r.getEvenement().getId());
@@ -46,11 +48,9 @@ public class ReservationEvenementController {
     public ResponseEntity<ReservationEvenementResponseDTO> reserver(
             @Valid @RequestBody ReservationEvenementRequestDTO dto) {
         ReservationEvenement saved = reservationService.reserverEvenement(
-                dto.getUserId(), dto.getEvenementId());
+                dto.getUserId(), dto.getEvenementId(), dto.getPhoneNumber());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
-    }
-
-    @PutMapping("/{id}/annuler")
+    }    @PutMapping("/{id}/annuler")
     public ResponseEntity<ReservationEvenementResponseDTO> annuler(@PathVariable Long id) {
         return ResponseEntity.ok(toResponse(reservationService.annulerReservation(id)));
     }
@@ -58,6 +58,15 @@ public class ReservationEvenementController {
     @PutMapping("/{id}/confirmer")
     public ResponseEntity<ReservationEvenementResponseDTO> confirmer(@PathVariable Long id) {
         return ResponseEntity.ok(toResponse(reservationService.confirmerReservation(id)));
+    }
+
+    @PutMapping("/{id}/already-used")
+    public ResponseEntity<Object> markAsAlreadyUsed(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(toResponse(reservationService.markAsAlreadyUsed(id)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
     }
 
     // ── CRUD ─────────────────────────────────────────────────────
@@ -124,5 +133,28 @@ public class ReservationEvenementController {
             @PathVariable Long userId) {
         return ResponseEntity.ok(reservationService.getUserWaitlist(userId)
                 .stream().map(this::toResponse).collect(Collectors.toList()));
+    }
+
+    /**
+     * Mark a reservation as already used via QR code scan
+     * Used by frontend when admin scans the QR code
+     */
+    @PutMapping("/{id}/mark-used-qr")
+    public ResponseEntity<Object> markAsUsedViaQR(@PathVariable Long id) {
+        try {
+            ReservationEvenement updated = reservationService.markAsAlreadyUsed(id);
+            return ResponseEntity.ok(toResponse(updated));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    // Error response class
+    public static class ErrorResponse {
+        public String message;
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
+        public String getMessage() { return message; }
     }
 }

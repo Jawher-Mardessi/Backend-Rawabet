@@ -23,7 +23,7 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
 
     @Query("SELECT COUNT(r) FROM ReservationEvenement r " +
             "WHERE r.evenement.id = :evenementId " +
-            "AND r.statut <> 'ANNULEE' " +
+            "AND r.statut <> 'CANCELLED' " +
             "AND r.enAttente = false")
     int countActiveReservations(@Param("evenementId") Long evenementId);
 
@@ -31,6 +31,6 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
     @Query("SELECT COUNT(r) FROM ReservationEvenement r " +
             "WHERE r.evenement.id = :evenementId " +
             "AND r.enAttente = true " +
-            "AND r.statut <> 'ANNULEE'")
+            "AND r.statut <> 'CANCELLED'")
     int countWaitlist(@Param("evenementId") Long evenementId);
 }

@@ -1,6 +1,7 @@
 package org.example.rawabet.controllers;
 
 import jakarta.validation.Valid;
+import org.example.rawabet.dto.MaterielOccupationDTO;
 import org.example.rawabet.dto.MaterielRequestDTO;
 import org.example.rawabet.dto.MaterielResponseDTO;
 import org.example.rawabet.entities.CategorieMateriel;
@@ -35,9 +36,9 @@ public class MaterielController {
         m.setNom(dto.getNom());
         m.setDescription(dto.getDescription());
         m.setReference(dto.getReference());
-        m.setQuantiteDisponible(dto.getQuantiteDisponible());
+        m.setQuantiteTotale(dto.getQuantiteDisponible());
         m.setPrixUnitaire(dto.getPrixUnitaire());
-        m.setDisponible(dto.isDisponible());
+        m.setStatus(dto.getStatus());
         if (dto.getCategorieId() != null) {
             CategorieMateriel categorie = categorieService.getCategorieById(dto.getCategorieId());
             m.setCategorie(categorie);
@@ -51,9 +52,8 @@ public class MaterielController {
         dto.setNom(m.getNom());
         dto.setDescription(m.getDescription());
         dto.setReference(m.getReference());
-        dto.setQuantiteDisponible(m.getQuantiteDisponible());
+        dto.setQuantiteDisponible(m.getQuantiteTotale());
         dto.setPrixUnitaire(m.getPrixUnitaire());
-        dto.setDisponible(m.isDisponible());
         dto.setStatus(m.getStatus());
         if (m.getCategorie() != null) {
             dto.setCategorieId(m.getCategorie().getId());
@@ -62,7 +62,10 @@ public class MaterielController {
         return dto;
     }
     // ── CRUD ─────────────────────────────────────────────────────
-
+    @GetMapping("/{id}/occupation")
+    public ResponseEntity<List<MaterielOccupationDTO>> getFullOccupation(@PathVariable Long id) {
+        return ResponseEntity.ok(materielService.getFullOccupation(id));
+    }
     @PostMapping
     public ResponseEntity<MaterielResponseDTO> addMateriel(
             @Valid @RequestBody MaterielRequestDTO dto) {
@@ -134,10 +137,6 @@ public class MaterielController {
         List<MaterielResponseDTO> result = materielService.getMaterielsByCategorie(categorieId)
                 .stream().map(this::toResponse).collect(Collectors.toList());
         return ResponseEntity.ok(result);
-    }
-    @PatchMapping("/{id}/toggle-disponible")
-    public ResponseEntity<MaterielResponseDTO> toggleDisponible(@PathVariable Long id) {
-        return ResponseEntity.ok(toResponse(materielService.toggleDisponible(id)));
     }
 
     @PatchMapping("/{id}/status")

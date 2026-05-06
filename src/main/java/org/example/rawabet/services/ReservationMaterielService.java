@@ -20,6 +20,7 @@ public class ReservationMaterielService implements IReservationMaterielService {
     @Autowired private ReservationMaterielRepository reservationMaterielRepository;
     @Autowired private MaterielRepository materielRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private IAvailabilityService availabilityService;
 
     @Override
     public ReservationMateriel addReservation(ReservationMateriel rm) {
@@ -66,23 +67,21 @@ public class ReservationMaterielService implements IReservationMaterielService {
         if (dateDebut.isBefore(LocalDateTime.now()))
             throw new RuntimeException("La date de début doit être dans le futur");
 
-        if (!materiel.isDisponible() || materiel.getStatus() != MaterielStatus.ACTIVE)
-            throw new RuntimeException("Ce matériel n'est pas disponible");
+        if (materiel.getStatus() != MaterielStatus.ACTIVE)
+            throw new RuntimeException("Ce matériel n'est pas disponible pour la réservation (en maintenance ou endommagé)");
 
-        // ✅ Fixed: subtract both reservations and event assignments
-        int reservedByReservations = materielRepository.getTotalReservedByReservation(
-                materielId, dateDebut, dateFin);
-        int assignedToEvents = materielRepository.getTotalAssignedByEvenement(
-                materielId, dateDebut, dateFin);
-        int available = materiel.getQuantiteDisponible() - reservedByReservations - assignedToEvents;
+        // Use the new centralized availability service
+        int availableQuantity = availabilityService.getAvailableQuantity(materielId, dateDebut, dateFin);
 
-        if (available < quantite)
-            throw new RuntimeException("Quantité insuffisante pour cette période. Disponible: " + available);
+        if (availableQuantity < quantite) {
+            throw new RuntimeException("Quantité insuffisante pour cette période. " +
+                    "Disponible: " + availableQuantity + ", Demandée: " + quantite);
+        }
 
         ReservationMateriel rm = new ReservationMateriel();
         rm.setUser(user);
         rm.setMateriel(materiel);
-        rm.setQuantite(quantite);
+        rm.setQuantiteReservee(quantite); // Make sure the field name is correct
         rm.setDateDebut(dateDebut);
         rm.setDateFin(dateFin);
         rm.setStatut(ReservationStatus.PENDING);
@@ -136,23 +135,28 @@ public class ReservationMaterielService implements IReservationMaterielService {
     public ReservationMateriel extendReservation(Long reservationId, LocalDateTime nouvelleDataFin) {
         ReservationMateriel rm = getById(reservationId);
 
-        if (rm.getStatut() == ReservationStatus.CANCELLED)
+        if (rm.getStatut() == ReservationStatus.CANCELLED) {
             throw new RuntimeException("Impossible d'étendre une réservation annulée");
+        }
 
-        if (nouvelleDataFin.isBefore(rm.getDateFin()))
+        if (nouvelleDataFin.isBefore(rm.getDateFin())) {
             throw new RuntimeException("La nouvelle date de fin doit être après la date de fin actuelle");
+        }
 
-        // ✅ Check availability for the extended period only
-        int reservedByReservations = materielRepository.getTotalReservedByReservation(
-                rm.getMateriel().getId(), rm.getDateFin(), nouvelleDataFin);
-        int assignedToEvents = materielRepository.getTotalAssignedByEvenement(
-                rm.getMateriel().getId(), rm.getDateFin(), nouvelleDataFin);
-        // Subtract the current reservation's own quantity since it already holds the original slot
-        int available = rm.getMateriel().getQuantiteDisponible()
-                - reservedByReservations - assignedToEvents;
+        // Check availability for the extended period.
+        // We check for the quantity of the *current* reservation, as other items might be available.
+        int availableQuantity = availabilityService.getAvailableQuantity(
+                rm.getMateriel().getId(),
+                rm.getDateFin(), // Start check from the old end time
+                nouvelleDataFin  // End check at the new end time
+        );
 
-        if (available < rm.getQuantite())
-            throw new RuntimeException("Stock insuffisant pour la période d'extension. Disponible: " + available);
+        if (availableQuantity < rm.getQuantiteReservee()) {
+            throw new RuntimeException(
+                    "Stock insuffisant pour la période d'extension. " +
+                    "Disponible: " + availableQuantity + ", Requis: " + rm.getQuantiteReservee()
+            );
+        }
 
         rm.setDateFin(nouvelleDataFin);
         return reservationMaterielRepository.save(rm);
@@ -162,19 +166,23 @@ public class ReservationMaterielService implements IReservationMaterielService {
     public ReservationMateriel retourPartiel(Long reservationId, int quantiteRetournee) {
         ReservationMateriel rm = getById(reservationId);
 
-        if (rm.getStatut() == ReservationStatus.CANCELLED)
+        if (rm.getStatut() == ReservationStatus.CANCELLED) {
             throw new RuntimeException("Cette réservation est déjà annulée");
+        }
 
-        if (quantiteRetournee >= rm.getQuantite())
+        if (quantiteRetournee <= 0) {
+            throw new RuntimeException("La quantité retournée doit être supérieure à 0");
+        }
+
+        if (quantiteRetournee >= rm.getQuantiteReservee()) {
             throw new RuntimeException(
                     "Pour un retour total, utilisez annulerReservation. " +
-                            "Quantité actuelle: " + rm.getQuantite());
+                    "Quantité actuelle: " + rm.getQuantiteReservee()
+            );
+        }
 
-        if (quantiteRetournee <= 0)
-            throw new RuntimeException("La quantité retournée doit être supérieure à 0");
-
-        // ✅ Reduce quantity — the freed stock is automatically available for others
-        rm.setQuantite(rm.getQuantite() - quantiteRetournee);
+        // Reduce quantity — the freed stock is automatically available for others
+        rm.setQuantiteReservee(rm.getQuantiteReservee() - quantiteRetournee);
         return reservationMaterielRepository.save(rm);
     }
 }

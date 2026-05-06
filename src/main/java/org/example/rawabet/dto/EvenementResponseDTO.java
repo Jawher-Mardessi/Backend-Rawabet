@@ -2,7 +2,9 @@ package org.example.rawabet.dto;
 
 import org.example.rawabet.enums.EvenementStatus;
 import org.example.rawabet.enums.SalleType;
+import org.example.rawabet.enums.TypeCategorie;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 public class EvenementResponseDTO {
 
@@ -14,6 +16,9 @@ public class EvenementResponseDTO {
     private int nombreDePlaces;
     private int placesRestantes;
     private EvenementStatus status;
+    private TypeCategorie categorie;
+    private BigDecimal prixUnitaire;
+    private BigDecimal prixReduit;
     private Long salleId;
     private String salleNom;
     private SalleType salleType;
@@ -43,6 +48,14 @@ public class EvenementResponseDTO {
 
     public EvenementStatus getStatus() { return status; }
     public void setStatus(EvenementStatus status) { this.status = status; }
+
+    public TypeCategorie getCategorie() { return categorie; }
+    public void setCategorie(TypeCategorie categorie) { this.categorie = categorie; }
+
+    public BigDecimal getPrixUnitaire() { return prixUnitaire; }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+
+
 
     public Long getSalleId() { return salleId; }
     public void setSalleId(Long salleId) { this.salleId = salleId; }

@@ -1,7 +1,7 @@
-package org.example.rawabet.enums;
+    package org.example.rawabet.enums;
 
-public enum ReservationStatus {
-    PENDING,
-    CONFIRMED,
-    CANCELLED
-}
+    public enum ReservationStatus {
+        PENDING,
+        CONFIRMED,
+        CANCELLED
+    }

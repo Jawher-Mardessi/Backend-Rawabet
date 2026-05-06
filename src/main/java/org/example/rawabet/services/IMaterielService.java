@@ -1,5 +1,6 @@
 package org.example.rawabet.services;
 
+import org.example.rawabet.dto.MaterielOccupationDTO;
 import org.example.rawabet.entities.Materiel;
 import org.example.rawabet.enums.MaterielStatus;
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public interface IMaterielService {
     int getAvailableQuantity(Long materielId, LocalDateTime dateDebut, LocalDateTime dateFin);
     List<Materiel> getAvailableMateriels(LocalDateTime dateDebut, LocalDateTime dateFin);
     List<Materiel> getMaterielsByCategorie(Long categorieId);
-    Materiel toggleDisponible(Long id);                               // ✅ new
-    Materiel updateStatus(Long id, MaterielStatus status);            // ✅ new
-    List<Materiel> getMaterielsByStatus(MaterielStatus status);       // ✅ new
+    Materiel updateStatus(Long id, MaterielStatus status);
+    List<Materiel> getMaterielsByStatus(MaterielStatus status);
+    List<MaterielOccupationDTO> getFullOccupation(Long materielId);
 }

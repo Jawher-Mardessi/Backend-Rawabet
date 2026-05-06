@@ -4,11 +4,11 @@ import org.example.rawabet.entities.Evenement;
 import org.example.rawabet.entities.ReservationEvenement;
 import org.example.rawabet.entities.User;
 import org.example.rawabet.enums.EvenementStatus;
+import org.example.rawabet.enums.ReservationEvenementAttribut;
 import org.example.rawabet.enums.ReservationStatus;
 import org.example.rawabet.repositories.EvenementRepository;
 import org.example.rawabet.repositories.ReservationEvenementRepository;
 import org.example.rawabet.repositories.UserRepository;
-import org.example.rawabet.services.IReservationEvenementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -22,6 +22,7 @@ public class ReservationEvenementService implements IReservationEvenementService
     @Autowired private ReservationEvenementRepository reservationRepository;
     @Autowired private EvenementRepository evenementRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private EmailService emailService;
 
     @Override
     public ReservationEvenement addReservation(ReservationEvenement reservation) {
@@ -54,7 +55,10 @@ public class ReservationEvenementService implements IReservationEvenementService
     }
 
     @Override
-    public ReservationEvenement reserverEvenement(Long userId, Long evenementId) {
+    public ReservationEvenement reserverEvenement(Long userId, Long evenementId, String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty())
+            throw new RuntimeException("Le numéro de téléphone est obligatoire");
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable avec l'id: " + userId));
 
@@ -67,13 +71,16 @@ public class ReservationEvenementService implements IReservationEvenementService
         if (evenement.getDateDebut().isBefore(LocalDateTime.now()))
             throw new RuntimeException("Cet événement est déjà passé");
 
-        if (userAlreadyReserved(userId, evenementId))
+        if (reservationRepository.existsByUserIdAndEvenementIdAndStatutNot(userId, evenementId, ReservationStatus.CANCELLED)) {
             throw new RuntimeException("Vous avez déjà une réservation pour cet événement");
+        }
 
         ReservationEvenement reservation = new ReservationEvenement();
         reservation.setUser(user);
         reservation.setEvenement(evenement);
         reservation.setDateReservation(LocalDateTime.now());
+        reservation.setPhoneNumber(phoneNumber);
+        reservation.setAttribut(ReservationEvenementAttribut.CONFIRMED);
 
         int activeReservations = evenementRepository.countActiveReservations(evenementId);
 
@@ -125,6 +132,25 @@ public class ReservationEvenementService implements IReservationEvenementService
 
         reservation.setStatut(ReservationStatus.CONFIRMED);
         reservation.setDateExpiration(null); // confirmed — no more expiry
+        ReservationEvenement saved = reservationRepository.save(reservation);
+
+        if (saved.getUser() != null && saved.getUser().getEmail() != null && !saved.getUser().getEmail().isBlank()) {
+            String reservationTitle = saved.getEvenement() != null ? saved.getEvenement().getTitre() : "votre réservation";
+            emailService.sendReservationConfirmedEmail(saved.getUser().getEmail(), reservationTitle, saved.getId());
+        }
+
+        return saved;
+    }
+
+    @Override
+    public ReservationEvenement markAsAlreadyUsed(Long reservationId) {
+        ReservationEvenement reservation = getReservationById(reservationId);
+
+        if (reservation.getAttribut() == ReservationEvenementAttribut.ALREADY_USED) {
+            throw new RuntimeException("Cette réservation est déjà marquée comme utilisée");
+        }
+
+        reservation.setAttribut(ReservationEvenementAttribut.ALREADY_USED);
         return reservationRepository.save(reservation);
     }
 

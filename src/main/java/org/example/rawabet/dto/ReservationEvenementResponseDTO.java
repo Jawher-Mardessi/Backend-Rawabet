@@ -1,6 +1,7 @@
 package org.example.rawabet.dto;
 
 import org.example.rawabet.enums.ReservationStatus;
+import org.example.rawabet.enums.ReservationEvenementAttribut;
 import java.time.LocalDateTime;
 
 public class ReservationEvenementResponseDTO {
@@ -8,7 +9,9 @@ public class ReservationEvenementResponseDTO {
     private Long id;
     private LocalDateTime dateReservation;
     private LocalDateTime dateExpiration;
+    private String phoneNumber;
     private ReservationStatus statut;
+    private ReservationEvenementAttribut attribut;
     private boolean enAttente;
     private Long userId;
     private String userNom;
@@ -29,8 +32,14 @@ public class ReservationEvenementResponseDTO {
     public LocalDateTime getDateExpiration() { return dateExpiration; }
     public void setDateExpiration(LocalDateTime dateExpiration) { this.dateExpiration = dateExpiration; }
 
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
     public ReservationStatus getStatut() { return statut; }
     public void setStatut(ReservationStatus statut) { this.statut = statut; }
+
+    public ReservationEvenementAttribut getAttribut() { return attribut; }
+    public void setAttribut(ReservationEvenementAttribut attribut) { this.attribut = attribut; }
 
     public boolean isEnAttente() { return enAttente; }
     public void setEnAttente(boolean enAttente) { this.enAttente = enAttente; }

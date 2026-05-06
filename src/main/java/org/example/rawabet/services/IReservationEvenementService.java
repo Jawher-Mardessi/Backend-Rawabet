@@ -10,9 +10,10 @@ public interface IReservationEvenementService {
     void deleteReservation(Long id);
     ReservationEvenement getReservationById(Long id);
     List<ReservationEvenement> getAllReservations();
-    ReservationEvenement reserverEvenement(Long userId, Long evenementId);
+    ReservationEvenement reserverEvenement(Long userId, Long evenementId, String phoneNumber);
     ReservationEvenement annulerReservation(Long reservationId);
     ReservationEvenement confirmerReservation(Long reservationId);
+    ReservationEvenement markAsAlreadyUsed(Long reservationId);
     List<ReservationEvenement> getReservationsByUser(Long userId);
     List<ReservationEvenement> getReservationsByEvenement(Long evenementId);
     List<ReservationEvenement> getReservationsByStatus(ReservationStatus statut);

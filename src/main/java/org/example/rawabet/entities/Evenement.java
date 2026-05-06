@@ -3,8 +3,10 @@ package org.example.rawabet.entities;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.example.rawabet.enums.EvenementStatus;
+import org.example.rawabet.enums.TypeCategorie;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Entity
 public class Evenement {
@@ -20,6 +22,11 @@ public class Evenement {
 
     @Enumerated(EnumType.STRING)
     private EvenementStatus status;   // ✅ DRAFT, PUBLISHED, CANCELLED
+
+    @Enumerated(EnumType.STRING)
+    private TypeCategorie categorie;
+
+    private BigDecimal prixUnitaire;
 
     @ManyToOne
     @JoinColumn(name = "salle_id")
@@ -71,6 +78,13 @@ public class Evenement {
 
     public EvenementStatus getStatus() { return status; }
     public void setStatus(EvenementStatus status) { this.status = status; }
+
+    public TypeCategorie getCategorie() { return categorie; }
+    public void setCategorie(TypeCategorie categorie) { this.categorie = categorie; }
+
+    public BigDecimal getPrixUnitaire() { return prixUnitaire; }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+
 
     public SalleEvenement getSalle() { return salle; }
     public void setSalle(SalleEvenement salle) { this.salle = salle; }
