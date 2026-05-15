@@ -1,0 +1,11 @@
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+uploads/
+.backup/
+database/
+k8s/
+ai model/
+*.log

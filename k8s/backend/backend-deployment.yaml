@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-rawabet
+  labels:
+    app: backend-rawabet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-rawabet
+  template:
+    metadata:
+      labels:
+        app: backend-rawabet
+    spec:
+      containers:
+        - name: backend-rawabet
+          image: backend-rawabet:1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql-service:3306/rawabet?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: JWT_SECRET
+            - name: SERVER_PORT
+              value: "8081"
+            - name: SERVER_SERVLET_CONTEXT_PATH
+              value: "/rawabet"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            - name: APP_FRONTEND_URL
+              value: "http://localhost:4200"
+            - name: APP_BACKEND_URL
+              value: "http://backend-service:8081/rawabet"
+            - name: ML_API_URL
+              value: "http://ml-service:8000"
+            - name: FACE_API_URL
+              value: "http://face-service:5000"
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 80
+            periodSeconds: 20
